@@ -2,8 +2,7 @@ import { Drawer } from "@base-ui/react/drawer";
 import { X } from "lucide-react";
 import { useState } from "react";
 
-import { defaultChickenCut, useCart } from "../lib/cart";
-import type { CartLine } from "../lib/cart";
+import { useCart } from "../lib/cart";
 import { formatMoney, formatQuantity } from "../lib/format";
 import {
   isProductQuantity,
@@ -18,16 +17,14 @@ import { WeightSelector } from "./weight-selector";
 
 export const AddToCartSheet = ({
   product,
-  line,
   onClose,
 }: {
   product: Product;
-  line?: CartLine;
   onClose: () => void;
 }) => {
-  const { add, changeLine } = useCart();
+  const { add } = useCart();
   const [open, setOpen] = useState(true);
-  const [quantity, setQuantity] = useState<number | null>(line?.quantity ?? 1);
+  const [quantity, setQuantity] = useState<number | null>(1);
   const [error, setError] = useState("");
   const valid = quantity !== null && isProductQuantity(product, quantity);
   const variable = isVariableWeight(product);
@@ -43,13 +40,9 @@ export const AddToCartSheet = ({
       return;
     }
 
-    const result = line
-      ? changeLine(line.key, { quantity })
-      : add(product, quantity, defaultChickenCut(product));
-
-    if (!result) {
+    if (!add(product, quantity)) {
       setError(
-        "This would exceed the item limit. Choose a smaller amount or edit the item in your basket."
+        "This would exceed the item limit. Choose a smaller amount or remove the item from your basket first."
       );
 
       return;
@@ -82,9 +75,7 @@ export const AddToCartSheet = ({
               </Drawer.Close>
             </div>
             <div className="sheet-scroll">
-              <Drawer.Title>
-                {line?.cut ? `${line.cut} chicken` : product.name}
-              </Drawer.Title>
+              <Drawer.Title>{product.name}</Drawer.Title>
               <p className="sheet-price">
                 {formatMoney(product.price_rs)} / {product.unit}
               </p>
@@ -95,7 +86,7 @@ export const AddToCartSheet = ({
                 <WeightSelector
                   product={product}
                   grams={grams}
-                  initialQuantity={line?.quantity ?? 1}
+                  initialQuantity={1}
                   onValueChange={changeQuantity}
                 />
               )}
@@ -121,7 +112,7 @@ export const AddToCartSheet = ({
                 disabled={!open || !valid}
                 onClick={submit}
               >
-                <span>{line ? "Update basket" : "Add to basket"}</span>
+                <span>Add to basket</span>
                 {valid && quantity !== null && (
                   <span>
                     {variable

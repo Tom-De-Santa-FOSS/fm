@@ -1,29 +1,16 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { AddToCartSheet } from "../components/add-to-cart-sheet";
 import { ArrowRight, CheckoutHeader, Header } from "../components/storefront";
 import { Button } from "../components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
-import { chickenCutsFor, useCart } from "../lib/cart";
-import type { CartLine } from "../lib/cart";
+import { useCart } from "../lib/cart";
 import { formatMoney, formatQuantity } from "../lib/format";
 import {
   isVariableWeight,
   minimumOrderRs,
   productLineTotal,
-  productQuantityLimit,
-  productQuantityStep,
-  productWeightGrams,
 } from "../lib/products";
 import {
   WhatsAppOrderTooLongError,
@@ -32,13 +19,10 @@ import {
 } from "../lib/whatsapp";
 
 const CartPage = () => {
-  const { lines, count, countLabel, total, changeLine, exceedsLimit } =
-    useCart();
+  const { lines, count, countLabel, total, remove, exceedsLimit } = useCart();
 
   const navigate = useNavigate();
   const [error, setError] = useState("");
-  const [cutError, setCutError] = useState("");
-  const [editing, setEditing] = useState<CartLine | null>(null);
   const remaining = Math.max(0, minimumOrderRs - total);
 
   const variable = lines.some(({ product }) => isVariableWeight(product));
@@ -102,22 +86,15 @@ const CartPage = () => {
                 <span>{countLabel}</span>
                 <Link to="/">Add more items</Link>
               </div>
-              {cutError && (
-                <p className="order-error" role="alert">
-                  {cutError}
-                </p>
-              )}
               {lines.map((line) => {
-                const { key, product, quantity, cut } = line;
+                const { product, quantity } = line;
                 const variableWeight = isVariableWeight(product);
-                const weighted = productWeightGrams(product) !== null;
-                const step = productQuantityStep(product);
 
                 return (
-                  <article key={key} className="basket-line">
+                  <article key={product.id} className="basket-line">
                     <Link
                       className="basket-image"
-                      aria-label={cut ? `${cut} chicken` : product.name}
+                      aria-label={product.name}
                       to="/product/$id"
                       params={{ id: String(product.id) }}
                     >
@@ -136,88 +113,19 @@ const CartPage = () => {
                         to="/product/$id"
                         params={{ id: String(product.id) }}
                       >
-                        {cut ? `${cut} chicken` : product.name}
+                        {product.name}
                       </Link>
                     </div>
                     <div className="line-quantity">
+                      <span>{formatQuantity(product, quantity)}</span>
                       <button
                         type="button"
-                        aria-label={`${quantity <= step ? "Remove" : "Decrease"} ${cut ? `${cut} chicken` : product.name}`}
-                        onClick={() =>
-                          changeLine(key, {
-                            quantity: quantity <= step ? 0 : quantity - step,
-                          })
-                        }
+                        aria-label={`Remove ${product.name}`}
+                        onClick={() => remove(product.id)}
                       >
-                        {quantity <= step ? (
-                          <Trash2 size={18} />
-                        ) : (
-                          <Minus size={18} />
-                        )}
-                      </button>
-                      {weighted ? (
-                        <button
-                          type="button"
-                          className="line-quantity-value"
-                          aria-label={`Edit weight for ${cut ? `${cut} chicken` : product.name}: ${formatQuantity(product, quantity)}`}
-                          onClick={() => setEditing(line)}
-                        >
-                          {formatQuantity(product, quantity)}
-                        </button>
-                      ) : (
-                        <span>{formatQuantity(product, quantity)}</span>
-                      )}
-                      <button
-                        type="button"
-                        aria-label={`Increase ${cut ? `${cut} chicken` : product.name}`}
-                        disabled={
-                          quantity + step > productQuantityLimit(product)
-                        }
-                        onClick={() =>
-                          changeLine(key, { quantity: quantity + step })
-                        }
-                      >
-                        <Plus size={18} />
+                        <Trash2 size={18} />
                       </button>
                     </div>
-                    {cut && (
-                      <Select
-                        items={chickenCutsFor(product).map((option) => ({
-                          label: option,
-                          value: option,
-                        }))}
-                        value={cut}
-                        onValueChange={(value) => {
-                          if (value === null) {
-                            return;
-                          }
-
-                          const result = changeLine(key, { cut: value });
-
-                          setCutError(
-                            result
-                              ? ""
-                              : "These cuts would exceed the item limit when combined. Reduce their weight before changing the cut."
-                          );
-                        }}
-                      >
-                        <SelectTrigger
-                          className="edit-cut"
-                          aria-label={`Edit cut for ${product.name}`}
-                        >
-                          <SelectValue>{() => "Edit cut"}</SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="edit-cut-menu">
-                          <SelectGroup>
-                            {chickenCutsFor(product).map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    )}
                     <strong>
                       {variableWeight
                         ? "After weighing"
@@ -248,9 +156,8 @@ const CartPage = () => {
               )}
               {exceedsLimit && (
                 <p className="order-error" role="alert">
-                  Some saved items exceed the item limit after combining
-                  matching cuts. Reduce their weight or quantity before
-                  ordering.
+                  Some saved items exceed the item limit. Remove them and add a
+                  smaller amount before ordering.
                 </p>
               )}
               {error && (
@@ -309,14 +216,6 @@ const CartPage = () => {
           </div>
         )}
       </main>
-      {editing && (
-        <AddToCartSheet
-          key={editing.key}
-          product={editing.product}
-          line={editing}
-          onClose={() => setEditing(null)}
-        />
-      )}
     </div>
   );
 };

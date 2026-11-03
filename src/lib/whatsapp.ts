@@ -13,12 +13,12 @@ export const whatsappOrderText = (lines: CartLine[], total: number) =>
   [
     "Hi, I'd like to order:",
     "",
-    ...lines.map(({ product, quantity, cut }) => {
+    ...lines.map(({ product, quantity }) => {
       if (isVariableWeight(product)) {
         return `${product.name}: ${quantity} ${product.id === 4 ? "chickens" : "cuts"} at ${formatMoney(product.price_rs)}/kg. Please confirm actual weight and price.`;
       }
 
-      return `${cut ? `${cut} chicken` : product.name}: ${formatQuantity(product, quantity)} = ${formatMoney(productLineTotal(product, quantity))} (${formatMoney(product.price_rs)} per ${product.unit})`;
+      return `${product.name}: ${formatQuantity(product, quantity)} = ${formatMoney(productLineTotal(product, quantity))} (${formatMoney(product.price_rs)} per ${product.unit})`;
     }),
     "",
     `Priced items: ${formatMoney(total)}`,

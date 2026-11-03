@@ -4,11 +4,32 @@ import type { Product } from "../src/lib/products";
 export const products: Omit<Product, "ai_keywords">[] = [
   {
     available: true,
-    description: "Biryani cut or karahi cut, 1 kg.",
+    description: "Simple cut chicken, 1 kg.",
     id: 1,
     image_url:
       "https://images.freshmarketpakistan.com/chicken-biryani-karahi.jpg",
-    name: "Biryani / Karahi Cut Chicken",
+    name: "Simple Cut Chicken",
+    price_rs: 600,
+    tag: "Chicken",
+    unit: "kg",
+  },
+  {
+    available: true,
+    description: "Karahi cut chicken, 1 kg.",
+    id: 19,
+    image_url: "https://images.freshmarketpakistan.com/chicken-karahi-cut.jpg",
+    name: "Karahi Cut Chicken",
+    price_rs: 600,
+    tag: "Chicken",
+    unit: "kg",
+  },
+  {
+    available: true,
+    description: "Biryani cut chicken, 1 kg.",
+    id: 20,
+    image_url:
+      "https://images.freshmarketpakistan.com/chicken-biryani-cut.webp",
+    name: "Biryani Cut Chicken",
     price_rs: 600,
     tag: "Chicken",
     unit: "kg",

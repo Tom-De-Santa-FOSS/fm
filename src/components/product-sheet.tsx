@@ -1,16 +1,9 @@
 import { Drawer } from "@base-ui/react/drawer";
-import { useLoaderData } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
 import { X } from "lucide-react";
 import { useState } from "react";
 
-import {
-  chickenCutsFor,
-  defaultChickenCut,
-  productForCut,
-  useCart,
-} from "../lib/cart";
-import type { ChickenCut } from "../lib/cart";
+import { useCart } from "../lib/cart";
 import { formatMoney, formatQuantity } from "../lib/format";
 import type { Product } from "../lib/products";
 import {
@@ -20,15 +13,6 @@ import {
 } from "../lib/products";
 import { AmountField } from "./amount-field";
 import { Button } from "./ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 
 export const ProductSheet = ({
   product,
@@ -38,30 +22,20 @@ export const ProductSheet = ({
   onClose: () => void;
 }) => {
   const { add } = useCart();
-  const products = useLoaderData({ from: "/_catalog" });
   const [open, setOpen] = useState(true);
   const [amount, setAmount] = useState<number | null>(1);
   const [error, setError] = useState("");
-
-  const [cut, setCut] = useState<ChickenCut>(
-    () => defaultChickenCut(product) ?? "Biryani"
-  );
-
-  const chicken = product.id >= 1 && product.id <= 3;
   const variable = isVariableWeight(product);
-  const selectedProduct = productForCut(product, cut, products);
-
-  const cuts = chickenCutsFor(selectedProduct);
-  const valid = amount !== null && isProductQuantity(selectedProduct, amount);
+  const valid = amount !== null && isProductQuantity(product, amount);
 
   const submit = () => {
     if (amount === null || !valid) {
       return;
     }
 
-    if (!add(selectedProduct, amount, chicken ? cut : undefined)) {
+    if (!add(product, amount)) {
       setError(
-        "This would exceed the item limit. Choose a smaller amount or edit the item in your basket."
+        "This would exceed the item limit. Choose a smaller amount or remove the item from your basket first."
       );
 
       return;
@@ -96,7 +70,7 @@ export const ProductSheet = ({
             <div className="sheet-scroll">
               <div className="sheet-photo">
                 <Image
-                  src={selectedProduct.image_url}
+                  src={product.image_url}
                   alt=""
                   layout="fullWidth"
                   height={540}
@@ -105,41 +79,13 @@ export const ProductSheet = ({
                 />
               </div>
               <div className="sheet-content">
-                <Drawer.Title>{selectedProduct.name}</Drawer.Title>
+                <Drawer.Title>{product.name}</Drawer.Title>
                 <p className="sheet-price">
-                  <strong>{formatMoney(selectedProduct.price_rs)}</strong> /{" "}
-                  {selectedProduct.unit}
+                  <strong>{formatMoney(product.price_rs)}</strong> /{" "}
+                  {product.unit}
                 </p>
-                {chicken && (
-                  <Select
-                    items={cuts.map((option) => ({
-                      label: option,
-                      value: option,
-                    }))}
-                    value={cut}
-                    onValueChange={(value) => {
-                      if (value !== null) {
-                        setCut(value);
-                      }
-                    }}
-                  >
-                    <SelectLabel className="cut-field">Cut</SelectLabel>
-                    <SelectTrigger className="cut-trigger">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {cuts.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                )}
                 <AmountField
-                  product={selectedProduct}
+                  product={product}
                   value={amount}
                   onValueChange={(value) => {
                     setAmount(value);
@@ -163,7 +109,7 @@ export const ProductSheet = ({
                   onClick={submit}
                 >
                   {valid && amount !== null
-                    ? `Add ${formatQuantity(selectedProduct, amount)}${variable ? "" : ` · ${formatMoney(productLineTotal(selectedProduct, amount))}`}`
+                    ? `Add ${formatQuantity(product, amount)}${variable ? "" : ` · ${formatMoney(productLineTotal(product, amount))}`}`
                     : "Choose an amount"}
                 </Button>
               </div>

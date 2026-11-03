@@ -15,6 +15,13 @@
       "when": 1793733812520,
       "tag": "0001_catalog_search",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793733812521,
+      "tag": "0002_split_chicken_cuts",
+      "breakpoints": true
     }
   ]
 }

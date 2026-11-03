@@ -5,7 +5,7 @@ import { products } from "./seed-products";
 
 // Curated alternate names and use-cases. Replace or expand these when catalog owners approve them.
 const keywords = {
-  1: "poultry murghi chicken curry biryani karahi pieces",
+  1: "poultry murghi chicken simple cut pieces",
   10: "hari mirch green chili chilli spicy pepper",
   11: "dabal roti double roti bread toast sandwich",
   12: "adrak ginger spice tea",
@@ -15,7 +15,9 @@ const keywords = {
   16: "podina pudina mint herb chutney",
   17: "nimbu lemon lime citrus",
   18: "pape papay rusk toast biscuit tea",
+  19: "poultry murghi chicken karahi curry pieces",
   2: "poultry boneless chicken cubes tikka curry",
+  20: "poultry murghi chicken biryani pieces",
   3: "poultry boneless breast fillet lean chicken",
   4: "poultry whole murghi roast chicken",
   5: "poultry chicken tikka chest breast",

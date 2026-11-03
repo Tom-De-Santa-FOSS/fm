@@ -15,71 +15,9 @@ import {
 } from "./products";
 import type { Product } from "./products";
 
-export type ChickenCut =
-  | "Simple cut"
-  | "Biryani"
-  | "Karahi"
-  | "Cubes"
-  | "Breast";
-
-export const chickenCutsFor = (product: Product): ChickenCut[] => {
-  if (product.id === 1) {
-    return ["Simple cut", "Biryani", "Karahi"];
-  }
-
-  if (product.id === 2 || product.id === 3) {
-    return ["Simple cut", "Cubes", "Breast"];
-  }
-
-  return [];
-};
-
-const isWeightChicken = (product: Product) =>
-  chickenCutsFor(product).length > 0;
-
-export const defaultChickenCut = (product: Product): ChickenCut | undefined => {
-  if (product.id === 1) {
-    return "Biryani";
-  }
-
-  if (product.id === 2) {
-    return "Cubes";
-  }
-
-  return product.id === 3 ? "Breast" : undefined;
-};
-
-const isChickenCut = (product: Product, cut: string): cut is ChickenCut =>
-  chickenCutsFor(product).some((option) => option === cut);
-
-export const productForCut = (
-  product: Product,
-  cut: ChickenCut | undefined,
-  products: Product[]
-): Product => {
-  if (product.id !== 2 && product.id !== 3) {
-    return product;
-  }
-
-  const id = cut === "Breast" ? 3 : 2;
-  const selected = products.find((item) => item.id === id);
-
-  if (!selected) {
-    throw new Error(`Missing boneless chicken product ${id}`);
-  }
-
-  return selected;
-};
-
-const lineKey = (product: Product, cut?: ChickenCut) =>
-  cut ? `${product.id}:${cut}` : String(product.id);
-
 export interface CartLine {
-  key: string;
   product: Product;
   quantity: number;
-  cut?: ChickenCut;
-  weight?: number;
 }
 
 export interface CartUpdate {
@@ -93,15 +31,8 @@ interface CartValue {
   countLabel: string;
   total: number;
   exceedsLimit: boolean;
-  add: (
-    product: Product,
-    quantity: number,
-    cut?: ChickenCut
-  ) => CartUpdate | null;
-  changeLine: (
-    key: string,
-    update: { cut?: string; quantity?: number }
-  ) => CartUpdate | null;
+  add: (product: Product, quantity: number) => CartUpdate | null;
+  remove: (productId: number) => void;
 }
 
 const CartContext = createContext<CartValue | null>(null);
@@ -120,7 +51,69 @@ const cartTotals = (lines: CartLine[]) => {
   return { count, total: Math.round(total * 100) / 100 };
 };
 
-// oxlint-disable-next-line complexity -- Local storage needs legacy and chicken entry validation at the read boundary.
+// Validate saved data and translate old cut-based entries at the storage boundary.
+// oxlint-disable-next-line complexity -- Saved entries need shape, product, legacy, and quantity checks.
+const readSavedLine = (
+  // oxlint-disable-next-line anti-slop/no-unknown-parameters -- Parse untrusted JSON at the storage boundary.
+  value: unknown,
+  products: Product[]
+): CartLine | null => {
+  /* oxlint-disable anti-slop/no-runtime-typeof -- Validate untrusted localStorage data before using it. */
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("id" in value) ||
+    !("quantity" in value) ||
+    typeof value.id !== "number" ||
+    typeof value.quantity !== "number" ||
+    !Number.isInteger(value.id) ||
+    !Number.isFinite(value.quantity) ||
+    value.quantity <= 0
+  ) {
+    return null;
+  }
+
+  let { id } = value;
+
+  if (value.id === 1 && "cut" in value) {
+    if (value.cut === "Karahi") {
+      id = 19;
+    } else if (value.cut === "Biryani") {
+      id = 20;
+    }
+  }
+
+  if (
+    (value.id === 2 || value.id === 3) &&
+    "cut" in value &&
+    typeof value.cut === "string"
+  ) {
+    id = value.cut === "Breast" ? 3 : 2;
+  }
+
+  const product = products.find((item) => item.id === id);
+
+  if (!product) {
+    return null;
+  }
+
+  const quantity =
+    value.id <= 3 && "weight" in value ? value.weight : value.quantity;
+
+  if (
+    typeof quantity !== "number" ||
+    !Number.isFinite(quantity) ||
+    quantity <= 0 ||
+    !product.available ||
+    !Number.isInteger(quantity / productQuantityStep(product))
+  ) {
+    return null;
+  }
+  /* oxlint-enable anti-slop/no-runtime-typeof */
+
+  return { product, quantity };
+};
+
 const loadCart = (products: Product[]): CartLine[] => {
   try {
     const saved = window.localStorage.getItem(cartStorageKey);
@@ -138,74 +131,21 @@ const loadCart = (products: Product[]): CartLine[] => {
     const lines: CartLine[] = [];
 
     for (const value of entries) {
-      /* oxlint-disable anti-slop/no-runtime-typeof -- Validate untrusted localStorage entries before building cart lines. */
-      if (
-        typeof value !== "object" ||
-        value === null ||
-        !("id" in value) ||
-        !("quantity" in value) ||
-        typeof value.id !== "number" ||
-        typeof value.quantity !== "number" ||
-        !Number.isInteger(value.id) ||
-        !Number.isFinite(value.quantity) ||
-        value.quantity <= 0
-      ) {
-        continue;
-      }
-      /* oxlint-enable anti-slop/no-runtime-typeof */
+      const line = readSavedLine(value, products);
 
-      let product = products.find((item) => item.id === value.id);
-
-      if (!product) {
+      if (!line) {
         continue;
       }
 
-      /* oxlint-disable anti-slop/no-runtime-typeof -- Validate untrusted localStorage cut and weight fields. */
-      let cut: ChickenCut | undefined;
+      const existing = lines.find(
+        (item) => item.product.id === line.product.id
+      );
 
-      if (isWeightChicken(product)) {
-        cut =
-          "cut" in value &&
-          typeof value.cut === "string" &&
-          isChickenCut(product, value.cut)
-            ? value.cut
-            : "Simple cut";
-      }
-
-      product = productForCut(product, cut, products);
-      const key = lineKey(product, cut);
-
-      const quantity =
-        isWeightChicken(product) && "weight" in value
-          ? value.weight
-          : value.quantity;
-
-      if (typeof quantity !== "number" || !Number.isFinite(quantity)) {
-        continue;
-      }
-      /* oxlint-enable anti-slop/no-runtime-typeof */
-
-      if (
-        product.available &&
-        quantity > 0 &&
-        Number.isInteger(quantity / productQuantityStep(product))
-      ) {
-        const existing = lines.find((line) => line.key === key);
-
-        if (existing) {
-          // Preserve saved quantities when old product IDs collapse into one cut.
-          // Over-limit lines must be reduced before ordering.
-          existing.quantity += quantity;
-          existing.weight = cut ? existing.quantity : undefined;
-        } else {
-          lines.push({
-            cut,
-            key,
-            product,
-            quantity,
-            weight: cut ? quantity : undefined,
-          });
-        }
+      if (existing) {
+        // Old cut variants can collapse into one product; preserve their quantities.
+        existing.quantity += line.quantity;
+      } else {
+        lines.push(line);
       }
     }
 
@@ -224,11 +164,9 @@ const saveCart = (lines: CartLine[]) => {
     window.localStorage.setItem(
       cartStorageKey,
       JSON.stringify(
-        lines.map(({ product, quantity, cut, weight }) => ({
-          cut,
+        lines.map(({ product, quantity }) => ({
           id: product.id,
           quantity,
-          weight,
         }))
       )
     );
@@ -268,98 +206,28 @@ export const CartProvider = ({
     };
 
     return {
-      add: (requestedProduct, amount, cut) => {
-        if (
-          !isProductQuantity(requestedProduct, amount) ||
-          (isWeightChicken(requestedProduct) && cut === undefined) ||
-          (cut !== undefined && !isChickenCut(requestedProduct, cut))
-        ) {
+      add: (product, amount) => {
+        if (!isProductQuantity(product, amount)) {
           return null;
         }
 
-        const product = productForCut(requestedProduct, cut, products);
-        const key = lineKey(product, cut);
-        const found = linesRef.current.find((item) => item.key === key);
+        const found = linesRef.current.find(
+          (item) => item.product.id === product.id
+        );
+
         const quantity = (found?.quantity ?? 0) + amount;
 
         if (!isProductQuantity(product, quantity)) {
           return null;
         }
 
-        const line = {
-          cut,
-          key,
-          product,
-          quantity,
-          weight: cut ? quantity : undefined,
-        };
+        const line = { product, quantity };
 
         const next = found
-          ? linesRef.current.map((item) => (item.key === key ? line : item))
+          ? linesRef.current.map((item) =>
+              item.product.id === product.id ? line : item
+            )
           : [...linesRef.current, line];
-
-        return { quantity, total: commit(next) };
-      },
-      changeLine: (key, update) => {
-        const found = linesRef.current.find((line) => line.key === key);
-
-        if (!found) {
-          return null;
-        }
-
-        let { cut } = found;
-
-        if (update.cut !== undefined) {
-          if (!isChickenCut(found.product, update.cut)) {
-            return null;
-          }
-
-          const { cut: nextCut } = update;
-          cut = nextCut;
-        }
-
-        if (update.quantity === 0) {
-          const next = linesRef.current.filter((line) => line.key !== key);
-
-          return { quantity: 0, total: commit(next) };
-        }
-
-        const product = productForCut(found.product, cut, products);
-        const nextKey = lineKey(product, cut);
-
-        const existing = linesRef.current.find(
-          (line) => line.key === nextKey && line.key !== key
-        );
-
-        const quantity =
-          (update.quantity ?? found.quantity) + (existing?.quantity ?? 0);
-
-        const reducing =
-          nextKey === key &&
-          quantity > 0 &&
-          quantity < found.quantity &&
-          Number.isInteger(quantity / productQuantityStep(product));
-
-        if (!isProductQuantity(product, quantity) && !reducing) {
-          return null;
-        }
-
-        const next = linesRef.current.flatMap((line) => {
-          if (line.key !== key) {
-            return line.key === nextKey ? [] : [line];
-          }
-
-          return [
-            {
-              ...line,
-              cut,
-              key: nextKey,
-              product,
-              quantity,
-              weight: cut ? quantity : undefined,
-            },
-          ];
-        });
 
         return { quantity, total: commit(next) };
       },
@@ -369,9 +237,14 @@ export const CartProvider = ({
         ({ product, quantity }) => !isProductQuantity(product, quantity)
       ),
       lines,
+      remove: (productId) => {
+        commit(
+          linesRef.current.filter((line) => line.product.id !== productId)
+        );
+      },
       total,
     };
-  }, [lines, products]);
+  }, [lines]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
