@@ -667,6 +667,62 @@ img {
 .weight-option[data-checked] .weight-option-check svg {
   visibility: visible;
 }
+.weight-custom-row {
+  cursor: default;
+}
+.weight-custom-row:has(.weight-custom-option[data-checked]) {
+  background: var(--shop-pale);
+  color: var(--shop-green);
+  outline: 1.5px solid var(--shop-green);
+  outline-offset: -1.5px;
+}
+.weight-custom-option {
+  width: 20px;
+  flex-shrink: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.weight-custom-option:focus-visible {
+  outline: 2px solid var(--shop-green);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+.weight-custom-row > span {
+  white-space: nowrap;
+}
+.weight-custom-stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.weight-custom-stepper button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--shop-green);
+  cursor: pointer;
+}
+.weight-custom-stepper button:focus-visible {
+  outline: 2px solid var(--shop-green);
+}
+.weight-custom-stepper button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.weight-custom-option[data-checked] .weight-option-check {
+  background: var(--shop-green);
+  color: white;
+}
+.weight-custom-option[data-checked] .weight-option-check svg {
+  visibility: visible;
+}
 .amount-control {
   margin-top: 7px;
   height: 52px;

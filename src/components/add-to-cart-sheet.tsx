@@ -1,7 +1,5 @@
 import { Drawer } from "@base-ui/react/drawer";
-import { Radio } from "@base-ui/react/radio";
-import { RadioGroup } from "@base-ui/react/radio-group";
-import { Check, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useState } from "react";
 
 import { defaultChickenCut, useCart } from "../lib/cart";
@@ -16,6 +14,7 @@ import {
 import type { Product } from "../lib/products";
 import { AmountField } from "./amount-field";
 import { Button } from "./ui/button";
+import { WeightSelector } from "./weight-selector";
 
 export const AddToCartSheet = ({
   product,
@@ -93,46 +92,20 @@ export const AddToCartSheet = ({
                 {grams === null ? "How many would you like?" : "Choose weight"}
               </Drawer.Description>
               {grams !== null && (
-                <RadioGroup
-                  className="weight-options"
-                  aria-label="Choose weight"
-                  value={quantity === null ? null : quantity * grams}
-                  onValueChange={(weight) => {
-                    if (weight !== null) {
-                      changeQuantity(weight / grams);
-                    }
-                  }}
-                >
-                  {[250, 500, 1000].map((weight) => (
-                    <label key={weight}>
-                      <Radio.Root
-                        value={weight}
-                        className="weight-option"
-                        disabled={!isProductQuantity(product, weight / grams)}
-                      >
-                        <span>{formatQuantity(product, weight / grams)}</span>
-                        <span className="weight-option-price">
-                          {formatMoney(
-                            productLineTotal(product, weight / grams)
-                          )}
-                        </span>
-                        <Radio.Indicator
-                          keepMounted
-                          className="weight-option-check"
-                          aria-hidden="true"
-                        >
-                          <Check size={16} strokeWidth={3} />
-                        </Radio.Indicator>
-                      </Radio.Root>
-                    </label>
-                  ))}
-                </RadioGroup>
+                <WeightSelector
+                  product={product}
+                  grams={grams}
+                  initialQuantity={line?.quantity ?? 1}
+                  onValueChange={changeQuantity}
+                />
               )}
-              <AmountField
-                product={product}
-                value={quantity}
-                onValueChange={changeQuantity}
-              />
+              {grams === null && (
+                <AmountField
+                  product={product}
+                  value={quantity}
+                  onValueChange={changeQuantity}
+                />
+              )}
               {variable && (
                 <p className="weighing-note">
                   Final price confirmed after weighing.
