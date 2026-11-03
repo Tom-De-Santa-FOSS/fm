@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { ArrowRight, Search, ShoppingBag, X } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
@@ -36,7 +37,14 @@ export const Header = ({
               onSearchSubmit?.("");
             }}
           >
-            Fresh Market
+            <Image
+              src="/logo.png"
+              alt="Fresh Market"
+              layout="constrained"
+              width={132}
+              height={88}
+              loading="eager"
+            />
           </Link>
           <nav aria-label="Main navigation">
             <Link to="/delivery">Delivery</Link>
@@ -214,7 +222,14 @@ export const ProductCard = ({
         params={{ id: String(product.id) }}
         resetScroll={false}
       >
-        <img src={product.image_url} alt="" loading="lazy" />
+        <Image
+          src={product.image_url}
+          alt=""
+          layout="fullWidth"
+          height={178}
+          loading="lazy"
+          unstyled
+        />
       </Link>
       <div className="product-info">
         <h3>
@@ -244,7 +259,14 @@ export const ProductCard = ({
 
 export const Footer = () => (
   <footer className="site-footer">
-    <strong>Fresh Market</strong>
+    <Image
+      src="/logo.png"
+      alt="Fresh Market"
+      layout="fixed"
+      width={105}
+      height={70}
+      loading="lazy"
+    />
     <div>
       <Link to="/delivery">Delivery</Link>
       <a href="https://wa.me/923337125030">WhatsApp</a>

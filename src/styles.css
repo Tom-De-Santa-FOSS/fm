@@ -98,13 +98,13 @@ img {
   display: contents;
 }
 .wordmark {
-  color: var(--shop-green);
-  font-size: 29px;
-  line-height: 38px;
-  letter-spacing: -0.045em;
-  font-weight: 800;
-  white-space: nowrap;
+  display: block;
   min-width: 235px;
+}
+.wordmark img {
+  width: 132px;
+  height: 88px;
+  object-fit: contain;
 }
 .header-search {
   display: flex;
@@ -342,9 +342,6 @@ img {
   justify-content: space-between;
   align-items: center;
   color: var(--shop-green);
-}
-.site-footer strong {
-  font-size: 16px;
 }
 .site-footer div {
   display: flex;
@@ -1075,7 +1072,6 @@ img {
   }
   .wordmark {
     min-width: 0;
-    font-size: 22px;
   }
   .header-inner nav {
     gap: 14px;
@@ -1101,6 +1097,10 @@ img {
   }
 }
 @media (max-width: 1023px) {
+  .wordmark img {
+    width: 90px;
+    height: 60px;
+  }
   .site-header--search,
   .site-header--search .header-inner {
     display: contents;
@@ -1167,8 +1167,6 @@ img {
   }
   .wordmark {
     flex: 1;
-    font-size: 21px;
-    line-height: 28px;
   }
   .header-inner nav > a:first-child {
     display: none;

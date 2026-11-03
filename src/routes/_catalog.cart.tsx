@@ -1,4 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -120,7 +121,15 @@ const CartPage = () => {
                       to="/product/$id"
                       params={{ id: String(product.id) }}
                     >
-                      <img src={product.image_url} alt="" />
+                      <Image
+                        src={product.image_url}
+                        alt=""
+                        layout="fixed"
+                        width={72}
+                        height={72}
+                        loading="lazy"
+                        unstyled
+                      />
                     </Link>
                     <div className="basket-line-info">
                       <Link

@@ -1,5 +1,6 @@
 import { Drawer } from "@base-ui/react/drawer";
 import { useLoaderData } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { X } from "lucide-react";
 import { useState } from "react";
 
@@ -94,7 +95,14 @@ export const ProductSheet = ({
             </div>
             <div className="sheet-scroll">
               <div className="sheet-photo">
-                <img src={selectedProduct.image_url} alt="" />
+                <Image
+                  src={selectedProduct.image_url}
+                  alt=""
+                  layout="fullWidth"
+                  height={540}
+                  loading="eager"
+                  unstyled
+                />
               </div>
               <div className="sheet-content">
                 <Drawer.Title>{selectedProduct.name}</Drawer.Title>
