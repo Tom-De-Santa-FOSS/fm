@@ -58,4 +58,4 @@ jobs:
           bunx --no-install cf deploy --prebuilt --mode production
       - name: Check production
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        run: curl --fail --silent --show-error --retry 3 --output /dev/null https://givelavish.com/
+        run: curl --fail --silent --show-error --retry 3 --output /dev/null https://freshmarketpakistan.com/

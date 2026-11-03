@@ -7,7 +7,7 @@ export default defineConfig({
   worker: {
     compatibilityDate: "2026-11-03",
     compatibilityFlags: ["nodejs_compat"],
-    domains: ["givelavish.com"],
+    domains: ["freshmarketpakistan.com"],
     entrypoint: "@tanstack/react-start/server-entry",
     env: {
       DB: bindings.d1({

@@ -23,7 +23,7 @@ Prices and availability belong to D1. Edit maintained products there rather than
 
 ## Deployment
 
-`cloudflare.config.ts` pins the personal Cloudflare account, Worker `fm`, custom domain `givelavish.com`, and D1 database `fm-catalog` in APAC. Sign in using `cf auth login` before remote operations.
+`cloudflare.config.ts` pins the personal Cloudflare account, Worker `fm`, custom domain `freshmarketpakistan.com`, and D1 database `fm-catalog` in APAC. Sign in using `cf auth login` before remote operations.
 
 ```bash
 bun run check
@@ -38,9 +38,9 @@ Remote migrations do not seed production. The initial deployment copied all 18 m
 
 Gitea remains the source repository. Its push mirror updates [Tom-De-Santa-FOSS/fm](https://github.com/Tom-De-Santa-FOSS/fm) on GitHub after each push. Commit workflow changes to Gitea, not directly to the mirror.
 
-`.github/workflows/deploy.yml` checks and builds pull requests without deployment credentials. Pushes to mirrored `main` also apply pending D1 migrations, deploy the validated build with `cf`, and check `https://givelavish.com/`. You can rerun deployment using the workflow's manual trigger on `main`. Production runs do not cancel an in-progress migration or deployment.
+`.github/workflows/deploy.yml` checks and builds pull requests without deployment credentials. Pushes to mirrored `main` also apply pending D1 migrations, deploy the validated build with `cf`, and check `https://freshmarketpakistan.com/`. You can rerun deployment using the workflow's manual trigger on `main`. Production runs do not cancel an in-progress migration or deployment.
 
-The GitHub repository secret `CLOUDFLARE_API_TOKEN` holds a dedicated deployment token. It grants Workers deployment and D1 write access in the configured account, plus zone read and Workers route write access for `givelavish.com`. Credentials are passed only to the migration/deployment step. The account ID comes from `cloudflare.config.ts`. The workflow never runs the development seed against production. Review committed migrations before merging to `main`, since they will run automatically.
+The GitHub repository secret `CLOUDFLARE_API_TOKEN` holds a dedicated deployment token. It grants Workers deployment and D1 write access in the configured account, plus zone read and Workers route write access for `freshmarketpakistan.com`. Credentials are passed only to the migration/deployment step. The account ID comes from `cloudflare.config.ts`. The workflow never runs the development seed against production. Review committed migrations before merging to `main`, since they will run automatically.
 
 For speed, the workflow caches Bun's package store by OS, architecture, Bun revision, and lockfile. A matching older store can supply unchanged packages when the lockfile changes; `bun install --frozen-lockfile` still verifies and installs the current dependency graph. This follows [GitHub's Bun cache example](https://github.com/actions/cache/blob/main/examples.md#bun) and [Superset's production workflow](https://github.com/superset-sh/superset/blob/main/.github/workflows/deploy-production.yml). Bun's setup action also caches its pinned executable. Checks and the build run concurrently, and both must succeed before migration or deployment. Builds run once per commit and deployment uses `--prebuilt`; production bundles, D1 data, and credentials are never cached. Documentation-only pushes skip deployment. Cloudflare uploads only changed static assets. Cache restore/save time can exceed the savings for this small app, so compare Actions step timings rather than assuming every cache hit is faster. The first uncached deployment job took 47 seconds (including 8 seconds each for sequential checks and build, and 2 seconds for dependency installation).
 
