@@ -1,15 +1,18 @@
-import { MinusIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react/ssr";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { AddToCartSheet } from "../components/add-to-cart-sheet";
-import {
-  ArrowRight,
-  CategoryNav,
-  Footer,
-  Header,
-} from "../components/storefront";
+import { ArrowRight, CheckoutHeader, Header } from "../components/storefront";
 import { Button } from "../components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 import { chickenCutsFor, useCart } from "../lib/cart";
 import type { CartLine } from "../lib/cart";
 import { formatMoney, formatQuantity } from "../lib/format";
@@ -18,6 +21,7 @@ import {
   minimumOrderRs,
   productLineTotal,
   productQuantityLimit,
+  productQuantityStep,
   productWeightGrams,
 } from "../lib/products";
 import {
@@ -27,7 +31,9 @@ import {
 } from "../lib/whatsapp";
 
 const CartPage = () => {
-  const { lines, countLabel, total, changeLine, exceedsLimit } = useCart();
+  const { lines, count, countLabel, total, changeLine, exceedsLimit } =
+    useCart();
+
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [cutError, setCutError] = useState("");
@@ -79,23 +85,21 @@ const CartPage = () => {
   };
 
   return (
-    <div className="page">
-      <Header />
-      <main className="shop-main basket-page">
-        <CategoryNav />
-        <div className="basket-heading">
-          <h1>
-            Your basket <small>{countLabel}</small>
-          </h1>
-          <Link to="/">Continue shopping →</Link>
-        </div>
+    <div className="page checkout-page">
+      <Header basketCount={count} />
+      <CheckoutHeader title="Your basket" backTo="/" backLabel="Shop" />
+      <main
+        className={`shop-main basket-page${remaining > 0 ? " basket-page--incomplete" : ""}`}
+      >
+        <h1 className="basket-heading">
+          Your basket <small>{countLabel}</small>
+        </h1>
         {lines.length ? (
           <div className="basket-layout">
             <div className="basket-lines">
-              <div className="basket-columns">
-                <span>Item</span>
-                <span>Weight / quantity</span>
-                <span>Subtotal</span>
+              <div className="basket-count">
+                <span>{countLabel}</span>
+                <Link to="/">Add more items</Link>
               </div>
               {cutError && (
                 <p className="order-error" role="alert">
@@ -106,6 +110,7 @@ const CartPage = () => {
                 const { key, product, quantity, cut } = line;
                 const variableWeight = isVariableWeight(product);
                 const weighted = productWeightGrams(product) !== null;
+                const step = productQuantityStep(product);
 
                 return (
                   <article key={key} className="basket-line">
@@ -124,78 +129,85 @@ const CartPage = () => {
                       >
                         {cut ? `${cut} chicken` : product.name}
                       </Link>
-                      {cut && (
-                        <label className="edit-cut">
-                          Edit cut
-                          <select
-                            aria-label={`Cut for ${product.name}`}
-                            value={cut}
-                            onChange={(event) => {
-                              const result = changeLine(key, {
-                                cut: event.target.value,
-                              });
-
-                              setCutError(
-                                result
-                                  ? ""
-                                  : "These cuts would exceed the item limit when combined. Reduce their weight before changing the cut."
-                              );
-                            }}
-                          >
-                            {chickenCutsFor(product).map((option) => (
-                              <option key={option}>{option}</option>
-                            ))}
-                          </select>
-                        </label>
-                      )}
                     </div>
-                    {weighted ? (
-                      <div className="line-weight">
+                    <div className="line-quantity">
+                      <button
+                        type="button"
+                        aria-label={`${quantity <= step ? "Remove" : "Decrease"} ${cut ? `${cut} chicken` : product.name}`}
+                        onClick={() =>
+                          changeLine(key, {
+                            quantity: quantity <= step ? 0 : quantity - step,
+                          })
+                        }
+                      >
+                        {quantity <= step ? (
+                          <Trash2 size={18} />
+                        ) : (
+                          <Minus size={18} />
+                        )}
+                      </button>
+                      {weighted ? (
                         <button
                           type="button"
-                          className="edit-weight"
-                          aria-label={`Edit weight for ${cut ? `${cut} chicken` : product.name}`}
+                          className="line-quantity-value"
+                          aria-label={`Edit weight for ${cut ? `${cut} chicken` : product.name}: ${formatQuantity(product, quantity)}`}
                           onClick={() => setEditing(line)}
                         >
-                          {formatQuantity(product, quantity)}{" "}
-                          <small>Edit weight</small>
+                          {formatQuantity(product, quantity)}
                         </button>
-                        <button
-                          type="button"
-                          className="remove-line"
-                          aria-label={`Remove ${cut ? `${cut} chicken` : product.name}`}
-                          onClick={() => changeLine(key, { quantity: 0 })}
-                        >
-                          <TrashIcon size={17} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="line-quantity">
-                        <button
-                          type="button"
-                          aria-label={`Remove one ${product.name}`}
-                          onClick={() =>
-                            changeLine(key, { quantity: quantity - 1 })
+                      ) : (
+                        <span>{formatQuantity(product, quantity)}</span>
+                      )}
+                      <button
+                        type="button"
+                        aria-label={`Increase ${cut ? `${cut} chicken` : product.name}`}
+                        disabled={
+                          quantity + step > productQuantityLimit(product)
+                        }
+                        onClick={() =>
+                          changeLine(key, { quantity: quantity + step })
+                        }
+                      >
+                        <Plus size={18} />
+                      </button>
+                    </div>
+                    {cut && (
+                      <Select
+                        items={chickenCutsFor(product).map((option) => ({
+                          label: option,
+                          value: option,
+                        }))}
+                        value={cut}
+                        onValueChange={(value) => {
+                          if (value === null) {
+                            return;
                           }
+
+                          const result = changeLine(key, { cut: value });
+
+                          setCutError(
+                            result
+                              ? ""
+                              : "These cuts would exceed the item limit when combined. Reduce their weight before changing the cut."
+                          );
+                        }}
+                      >
+                        <SelectTrigger
+                          className="edit-cut"
+                          aria-label={`Edit cut for ${product.name}`}
                         >
-                          {quantity === 1 ? (
-                            <TrashIcon size={17} />
-                          ) : (
-                            <MinusIcon size={17} />
-                          )}
-                        </button>
-                        <span>{quantity}</span>
-                        <button
-                          type="button"
-                          aria-label={`Add one ${product.name}`}
-                          disabled={quantity >= productQuantityLimit(product)}
-                          onClick={() =>
-                            changeLine(key, { quantity: quantity + 1 })
-                          }
-                        >
-                          <PlusIcon size={17} />
-                        </button>
-                      </div>
+                          <SelectValue>{() => "Edit cut"}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="edit-cut-menu">
+                          <SelectGroup>
+                            {chickenCutsFor(product).map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
                     )}
                     <strong>
                       {variableWeight
@@ -205,9 +217,6 @@ const CartPage = () => {
                   </article>
                 );
               })}
-              <Link className="continue-link" to="/">
-                + Add more items
-              </Link>
             </div>
             <aside className="order-summary">
               <h2>Order summary</h2>
@@ -241,18 +250,45 @@ const CartPage = () => {
                   <a href="tel:+923337125030">Call {whatsappPhoneNumber}</a>
                 </p>
               )}
-              <Button
-                className="order-button"
-                disabled={remaining > 0 || exceedsLimit}
-                onClick={order}
-              >
-                Order on WhatsApp <ArrowRight data-icon="inline-end" />
-              </Button>
-              <small>
-                Final total confirmed on WhatsApp. Opening chat does not place
-                an order.
-              </small>
+              {remaining === 0 && (
+                <>
+                  <Button
+                    className="order-button order-button--summary"
+                    disabled={exceedsLimit}
+                    onClick={order}
+                  >
+                    Order on WhatsApp <ArrowRight data-icon="inline-end" />
+                  </Button>
+                  <small>
+                    Final total confirmed on WhatsApp. Opening chat does not
+                    place an order.
+                  </small>
+                </>
+              )}
             </aside>
+            <div
+              className={`basket-order-dock${remaining > 0 ? " basket-order-dock--incomplete" : ""}`}
+            >
+              {remaining > 0 ? (
+                <Link className="solid-link" to="/">
+                  Add more items <ArrowRight size={18} />
+                </Link>
+              ) : (
+                <>
+                  <Button
+                    className="order-button"
+                    disabled={exceedsLimit}
+                    onClick={order}
+                  >
+                    Order on WhatsApp <ArrowRight data-icon="inline-end" />
+                  </Button>
+                  <small>
+                    Final total confirmed on WhatsApp. Opening chat does not
+                    place an order.
+                  </small>
+                </>
+              )}
+            </div>
           </div>
         ) : (
           <div className="empty-basket">
@@ -264,7 +300,6 @@ const CartPage = () => {
           </div>
         )}
       </main>
-      <Footer />
       {editing && (
         <AddToCartSheet
           key={editing.key}
@@ -277,4 +312,4 @@ const CartPage = () => {
   );
 };
 
-export const Route = createFileRoute("/cart")({ component: CartPage });
+export const Route = createFileRoute("/_catalog/cart")({ component: CartPage });

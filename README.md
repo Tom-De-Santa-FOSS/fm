@@ -1,19 +1,23 @@
 # Fresh Market storefront
 
-TanStack Start storefront for Fresh Market in Sukkur. The 18-product catalog, prices, image URLs and Rs 1,000 order minimum come from the existing Expo app in `../freshmarket/apps/expo-app/src/lib/products.ts`.
+TanStack Start storefront for Fresh Market in Sukkur. The product catalog, prices, availability, and searchable alternate names live in PostgreSQL. `pg_search` (ParadeDB) supplies BM25 ranking, field boosts, and typo-tolerant fallback. Search queries run on the server; the browser does not connect to PostgreSQL.
+
+## Local setup
 
 ```bash
 bun install
-bun run dev
+bun dev
 ```
 
-Customers can search or filter products and open a compact, image-free weight picker from Add to basket. Priced rows offer 250 g, 500 g and 1 kg; the shared input accepts other weights in 250 g / 0.25 kg steps, including 1.5 kg. Off-step entries disable confirmation. The product details sheet also offers chicken cut selection. Baskets are saved in browser storage, with weighted items editable through the same compact picker. Whole chicken and chest cuts are ordered by count and charged by their actual weight, so the basket excludes them from the priced-items subtotal. Ordering opens a prefilled WhatsApp chat; the customer must send the message and the store must confirm availability, delivery charge, payment and final total. There is no payment or order backend.
+Install `just` and keep Docker running. `bun dev` runs `just dev`, which starts the local PostgreSQL container, waits for readiness, applies migrations, imports missing seed products, and starts Vite on port 3000. It always connects to `127.0.0.1:55432/fm`, ignoring any external `DATABASE_URL`; no `.env` setup is needed for local development. Existing products are not overwritten. PostgreSQL stays running after Vite exits; stop it with `docker compose stop postgres`. Its named volume preserves data between runs.
 
-The picker adapts [Barakat's mobile size sheet](https://barakatfresh.ae/fruits.html), inspected on 3 November 2026: product title, priced size rows, per-row Add/quantity controls and Done. Here, rows select one total weight and the footer confirms it. Images are omitted and a g/kg input supports other weights. [FreshChoice's official FAQ](https://ranui.store.freshchoice.co.nz/pages/frequently-asked-questions) documents entering `0.25` to order 250 g; the 250 g increment restriction is a Fresh Market requirement.
+The migration requires a Postgres server with `pg_search` installed (and `pgvector`, required by recent ParadeDB releases). The bundled Compose service supplies both. For production, set `DATABASE_URL` on the server and apply migrations before deploying. Plain Postgres and managed services without `pg_search` cannot run this migration or search query. Do not run `db:seed` against an already-maintained production catalog: it inserts missing IDs but never overwrites existing rows. Edit product prices and availability directly in the database or through a separate catalog management tool; the seed is only an initial import.
+
+Search uses the indexed name, category, description, and `ai_keywords` columns. The initial alternate names are curated grocery terms, including common Roman Urdu spellings; no AI model or API runs when users search. Manage keywords as product data and review suggestions before publishing them. Exact token matches rank ahead of the typo fallback, and name matches are boosted. The current UI shows up to 60 results. Typing edits a draft; Enter or the search button submits it. Category changes filter the submitted search, not unfinished edits. Search design follows [Algolia's guidance on searchable attributes](https://www.algolia.com/doc/guides/going-to-production/case-study), [synonym restraint](https://www.algolia.com/doc/guides/managing-results/optimize-search-results/adding-synonyms), and [typo ranking](https://www.algolia.com/doc/guides/managing-results/optimize-search-results/typo-tolerance); implementation uses [ParadeDB's current index and scoring APIs](https://www.paradedb.com/docs/reference/indexing/create-index.md).
+
+The original 18 products are stored in `tools/seed-products.ts` only for initial import. This app does not update the separate Expo app at `../freshmarket/apps/expo-app`; synchronize that app independently if both must display the same prices. Baskets remain in browser localStorage, and ordering opens a prefilled WhatsApp message rather than placing an order in a backend. The store confirms availability, delivery, payment, and final price in chat. The Rs 1,000 minimum and weight/quantity behavior are unchanged.
 
 ```bash
 bun run check
 bun run build
 ```
-
-Product data is currently copied rather than shared between the two repositories. Update both catalogs when prices or availability change. Weights must be multiples of 250 g; count-based products use whole quantities. The existing maximum of 10 priced units per item still applies (10 kg for per-kg products, 5 kg for per-500 g products, 2.5 kg for per-250 g products). Saved basket quantities remain multiples of the catalog's priced unit, so existing valid baskets keep their amounts and prices. Invalid saved weights are rejected on restoration. The Expo app's Meta Pixel, LogRocket and Cloudflare search analytics are not connected in this TanStack app.

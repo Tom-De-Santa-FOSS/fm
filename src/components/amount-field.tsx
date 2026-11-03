@@ -1,11 +1,5 @@
 import { NumberField } from "@base-ui/react/number-field";
-import { Select } from "@base-ui/react/select";
-import {
-  CaretDownIcon,
-  CheckIcon,
-  MinusIcon,
-  PlusIcon,
-} from "@phosphor-icons/react/ssr";
+import { Minus, Plus } from "lucide-react";
 import { useId, useState } from "react";
 
 import { formatQuantity } from "../lib/format";
@@ -15,6 +9,14 @@ import {
   productWeightGrams,
 } from "../lib/products";
 import type { Product } from "../lib/products";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 export const AmountField = ({
   product,
@@ -66,7 +68,7 @@ export const AmountField = ({
       </label>
       <NumberField.Group className="amount-control">
         <NumberField.Decrement aria-label={`Decrease ${label.toLowerCase()}`}>
-          <MinusIcon size={18} />
+          <Minus size={18} />
         </NumberField.Decrement>
         <div className="amount-value">
           <NumberField.Input
@@ -77,7 +79,11 @@ export const AmountField = ({
             aria-describedby={`${id}-hint`}
           />
           {weighted && (
-            <Select.Root
+            <Select
+              items={(["g", "kg"] as const).map((option) => ({
+                label: option,
+                value: option,
+              }))}
               value={unit}
               onValueChange={(next) => {
                 if (next !== null) {
@@ -85,43 +91,23 @@ export const AmountField = ({
                 }
               }}
             >
-              <Select.Trigger className="amount-unit" aria-label="Weight unit">
-                <Select.Value />
-                <Select.Icon>
-                  <CaretDownIcon size={14} />
-                </Select.Icon>
-              </Select.Trigger>
-              <Select.Portal>
-                <Select.Positioner
-                  className="select-positioner"
-                  alignItemWithTrigger={false}
-                  sideOffset={4}
-                >
-                  <Select.Popup className="select-popup">
-                    <Select.List>
-                      <Select.Group>
-                        {(["g", "kg"] as const).map((option) => (
-                          <Select.Item
-                            key={option}
-                            value={option}
-                            className="select-option"
-                          >
-                            <Select.ItemText>{option}</Select.ItemText>
-                            <Select.ItemIndicator>
-                              <CheckIcon size={16} />
-                            </Select.ItemIndicator>
-                          </Select.Item>
-                        ))}
-                      </Select.Group>
-                    </Select.List>
-                  </Select.Popup>
-                </Select.Positioner>
-              </Select.Portal>
-            </Select.Root>
+              <SelectTrigger className="amount-unit" aria-label="Weight unit">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {(["g", "kg"] as const).map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           )}
         </div>
         <NumberField.Increment aria-label={`Increase ${label.toLowerCase()}`}>
-          <PlusIcon size={18} />
+          <Plus size={18} />
         </NumberField.Increment>
       </NumberField.Group>
       <p id={`${id}-hint`} className="amount-hint">

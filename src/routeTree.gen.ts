@@ -9,20 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ShopRouteImport } from './routes/_shop'
-import { Route as CartRouteImport } from './routes/cart'
+import { Route as CatalogRouteImport } from './routes/_catalog'
 import { Route as DeliveryRouteImport } from './routes/delivery'
-import { Route as HandoffRouteImport } from './routes/handoff'
-import { Route as ShopIndexRouteImport } from './routes/_shop.index'
-import { Route as ShopProductIdRouteImport } from './routes/_shop.product.$id'
+import { Route as CatalogShopRouteImport } from './routes/_catalog._shop'
+import { Route as CatalogCartRouteImport } from './routes/_catalog.cart'
+import { Route as CatalogHandoffRouteImport } from './routes/_catalog.handoff'
+import { Route as CatalogShopIndexRouteImport } from './routes/_catalog._shop.index'
+import { Route as CatalogShopProductIdRouteImport } from './routes/_catalog._shop.product.$id'
 
-const ShopRoute = ShopRouteImport.update({
-  id: '/_shop',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CartRoute = CartRouteImport.update({
-  id: '/cart',
-  path: '/cart',
+const CatalogRoute = CatalogRouteImport.update({
+  id: '/_catalog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DeliveryRoute = DeliveryRouteImport.update({
@@ -30,81 +26,83 @@ const DeliveryRoute = DeliveryRouteImport.update({
   path: '/delivery',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HandoffRoute = HandoffRouteImport.update({
+const CatalogShopRoute = CatalogShopRouteImport.update({
+  id: '/_shop',
+  getParentRoute: () => CatalogRoute,
+} as any)
+const CatalogCartRoute = CatalogCartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => CatalogRoute,
+} as any)
+const CatalogHandoffRoute = CatalogHandoffRouteImport.update({
   id: '/handoff',
   path: '/handoff',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => CatalogRoute,
 } as any)
-const ShopIndexRoute = ShopIndexRouteImport.update({
+const CatalogShopIndexRoute = CatalogShopIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => ShopRoute,
+  getParentRoute: () => CatalogShopRoute,
 } as any)
-const ShopProductIdRoute = ShopProductIdRouteImport.update({
+const CatalogShopProductIdRoute = CatalogShopProductIdRouteImport.update({
   id: '/product/$id',
   path: '/product/$id',
-  getParentRoute: () => ShopRoute,
+  getParentRoute: () => CatalogShopRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof ShopIndexRoute
-  '/cart': typeof CartRoute
+  '/': typeof CatalogShopIndexRoute
   '/delivery': typeof DeliveryRoute
-  '/handoff': typeof HandoffRoute
-  '/product/$id': typeof ShopProductIdRoute
+  '/cart': typeof CatalogCartRoute
+  '/handoff': typeof CatalogHandoffRoute
+  '/product/$id': typeof CatalogShopProductIdRoute
 }
 export interface FileRoutesByTo {
-  '/cart': typeof CartRoute
+  '/': typeof CatalogShopIndexRoute
   '/delivery': typeof DeliveryRoute
-  '/handoff': typeof HandoffRoute
-  '/': typeof ShopIndexRoute
-  '/product/$id': typeof ShopProductIdRoute
+  '/cart': typeof CatalogCartRoute
+  '/handoff': typeof CatalogHandoffRoute
+  '/product/$id': typeof CatalogShopProductIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_shop': typeof ShopRouteWithChildren
-  '/cart': typeof CartRoute
+  '/_catalog': typeof CatalogRouteWithChildren
   '/delivery': typeof DeliveryRoute
-  '/handoff': typeof HandoffRoute
-  '/_shop/': typeof ShopIndexRoute
-  '/_shop/product/$id': typeof ShopProductIdRoute
+  '/_catalog/_shop': typeof CatalogShopRouteWithChildren
+  '/_catalog/cart': typeof CatalogCartRoute
+  '/_catalog/handoff': typeof CatalogHandoffRoute
+  '/_catalog/_shop/': typeof CatalogShopIndexRoute
+  '/_catalog/_shop/product/$id': typeof CatalogShopProductIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cart' | '/delivery' | '/handoff' | '/product/$id'
+  fullPaths: '/' | '/delivery' | '/cart' | '/handoff' | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/cart' | '/delivery' | '/handoff' | '/' | '/product/$id'
+  to: '/' | '/delivery' | '/cart' | '/handoff' | '/product/$id'
   id:
     | '__root__'
-    | '/_shop'
-    | '/cart'
+    | '/_catalog'
     | '/delivery'
-    | '/handoff'
-    | '/_shop/'
-    | '/_shop/product/$id'
+    | '/_catalog/_shop'
+    | '/_catalog/cart'
+    | '/_catalog/handoff'
+    | '/_catalog/_shop/'
+    | '/_catalog/_shop/product/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  ShopRoute: typeof ShopRouteWithChildren
-  CartRoute: typeof CartRoute
+  CatalogRoute: typeof CatalogRouteWithChildren
   DeliveryRoute: typeof DeliveryRoute
-  HandoffRoute: typeof HandoffRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_shop': {
-      id: '/_shop'
+    '/_catalog': {
+      id: '/_catalog'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof ShopRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cart': {
-      id: '/cart'
-      path: '/cart'
-      fullPath: '/cart'
-      preLoaderRoute: typeof CartRouteImport
+      preLoaderRoute: typeof CatalogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/delivery': {
@@ -114,47 +112,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeliveryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/handoff': {
-      id: '/handoff'
+    '/_catalog/_shop': {
+      id: '/_catalog/_shop'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof CatalogShopRouteImport
+      parentRoute: typeof CatalogRoute
+    }
+    '/_catalog/cart': {
+      id: '/_catalog/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CatalogCartRouteImport
+      parentRoute: typeof CatalogRoute
+    }
+    '/_catalog/handoff': {
+      id: '/_catalog/handoff'
       path: '/handoff'
       fullPath: '/handoff'
-      preLoaderRoute: typeof HandoffRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof CatalogHandoffRouteImport
+      parentRoute: typeof CatalogRoute
     }
-    '/_shop/': {
-      id: '/_shop/'
+    '/_catalog/_shop/': {
+      id: '/_catalog/_shop/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof ShopIndexRouteImport
-      parentRoute: typeof ShopRoute
+      preLoaderRoute: typeof CatalogShopIndexRouteImport
+      parentRoute: typeof CatalogShopRoute
     }
-    '/_shop/product/$id': {
-      id: '/_shop/product/$id'
+    '/_catalog/_shop/product/$id': {
+      id: '/_catalog/_shop/product/$id'
       path: '/product/$id'
       fullPath: '/product/$id'
-      preLoaderRoute: typeof ShopProductIdRouteImport
-      parentRoute: typeof ShopRoute
+      preLoaderRoute: typeof CatalogShopProductIdRouteImport
+      parentRoute: typeof CatalogShopRoute
     }
   }
 }
 
-interface ShopRouteChildren {
-  ShopIndexRoute: typeof ShopIndexRoute
-  ShopProductIdRoute: typeof ShopProductIdRoute
+interface CatalogShopRouteChildren {
+  CatalogShopIndexRoute: typeof CatalogShopIndexRoute
+  CatalogShopProductIdRoute: typeof CatalogShopProductIdRoute
 }
 
-const ShopRouteChildren: ShopRouteChildren = {
-  ShopIndexRoute: ShopIndexRoute,
-  ShopProductIdRoute: ShopProductIdRoute,
+const CatalogShopRouteChildren: CatalogShopRouteChildren = {
+  CatalogShopIndexRoute: CatalogShopIndexRoute,
+  CatalogShopProductIdRoute: CatalogShopProductIdRoute,
 }
 
-const ShopRouteWithChildren = ShopRoute._addFileChildren(ShopRouteChildren)
+const CatalogShopRouteWithChildren = CatalogShopRoute._addFileChildren(
+  CatalogShopRouteChildren,
+)
+
+interface CatalogRouteChildren {
+  CatalogShopRoute: typeof CatalogShopRouteWithChildren
+  CatalogCartRoute: typeof CatalogCartRoute
+  CatalogHandoffRoute: typeof CatalogHandoffRoute
+}
+
+const CatalogRouteChildren: CatalogRouteChildren = {
+  CatalogShopRoute: CatalogShopRouteWithChildren,
+  CatalogCartRoute: CatalogCartRoute,
+  CatalogHandoffRoute: CatalogHandoffRoute,
+}
+
+const CatalogRouteWithChildren =
+  CatalogRoute._addFileChildren(CatalogRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  ShopRoute: ShopRouteWithChildren,
-  CartRoute: CartRoute,
+  CatalogRoute: CatalogRouteWithChildren,
   DeliveryRoute: DeliveryRoute,
-  HandoffRoute: HandoffRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

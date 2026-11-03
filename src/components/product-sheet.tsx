@@ -1,10 +1,6 @@
 import { Drawer } from "@base-ui/react/drawer";
-import { Select } from "@base-ui/react/select";
-import {
-  CaretDownIcon,
-  XIcon as X,
-  CheckIcon as Check,
-} from "@phosphor-icons/react/ssr";
+import { useLoaderData } from "@tanstack/react-router";
+import { X } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -23,6 +19,15 @@ import {
 } from "../lib/products";
 import { AmountField } from "./amount-field";
 import { Button } from "./ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 export const ProductSheet = ({
   product,
@@ -32,6 +37,7 @@ export const ProductSheet = ({
   onClose: () => void;
 }) => {
   const { add } = useCart();
+  const products = useLoaderData({ from: "/_catalog" });
   const [open, setOpen] = useState(true);
   const [amount, setAmount] = useState<number | null>(1);
   const [error, setError] = useState("");
@@ -42,7 +48,7 @@ export const ProductSheet = ({
 
   const chicken = product.id >= 1 && product.id <= 3;
   const variable = isVariableWeight(product);
-  const selectedProduct = productForCut(product, cut);
+  const selectedProduct = productForCut(product, cut, products);
 
   const cuts = chickenCutsFor(selectedProduct);
   const valid = amount !== null && isProductQuantity(selectedProduct, amount);
@@ -97,7 +103,11 @@ export const ProductSheet = ({
                   {selectedProduct.unit}
                 </p>
                 {chicken && (
-                  <Select.Root
+                  <Select
+                    items={cuts.map((option) => ({
+                      label: option,
+                      value: option,
+                    }))}
                     value={cut}
                     onValueChange={(value) => {
                       if (value !== null) {
@@ -105,40 +115,20 @@ export const ProductSheet = ({
                       }
                     }}
                   >
-                    <Select.Label className="cut-field">Cut</Select.Label>
-                    <Select.Trigger className="cut-trigger">
-                      <Select.Value />
-                      <Select.Icon>
-                        <CaretDownIcon size={16} />
-                      </Select.Icon>
-                    </Select.Trigger>
-                    <Select.Portal>
-                      <Select.Positioner
-                        className="select-positioner"
-                        alignItemWithTrigger={false}
-                        sideOffset={4}
-                      >
-                        <Select.Popup className="select-popup">
-                          <Select.List>
-                            <Select.Group>
-                              {cuts.map((option) => (
-                                <Select.Item
-                                  key={option}
-                                  value={option}
-                                  className="select-option"
-                                >
-                                  <Select.ItemText>{option}</Select.ItemText>
-                                  <Select.ItemIndicator>
-                                    <Check size={16} aria-hidden="true" />
-                                  </Select.ItemIndicator>
-                                </Select.Item>
-                              ))}
-                            </Select.Group>
-                          </Select.List>
-                        </Select.Popup>
-                      </Select.Positioner>
-                    </Select.Portal>
-                  </Select.Root>
+                    <SelectLabel className="cut-field">Cut</SelectLabel>
+                    <SelectTrigger className="cut-trigger">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {cuts.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 )}
                 <AmountField
                   product={selectedProduct}

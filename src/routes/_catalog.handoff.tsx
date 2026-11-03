@@ -1,19 +1,24 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { Header } from "../components/storefront";
+import { CheckoutHeader, Header } from "../components/storefront";
 import { useCart } from "../lib/cart";
 import { minimumOrderRs } from "../lib/products";
 import { whatsappOrderText, whatsappOrderUrl } from "../lib/whatsapp";
 
 const HandoffPage = () => {
-  const { lines, total, exceedsLimit } = useCart();
+  const { lines, count, total, exceedsLimit } = useCart();
   const [copied, setCopied] = useState(false);
 
   if (!lines.length || total < minimumOrderRs || exceedsLimit) {
     return (
-      <div className="page">
-        <Header />
+      <div className="page checkout-page">
+        <Header basketCount={count} />
+        <CheckoutHeader
+          title="Order on WhatsApp"
+          backTo="/cart"
+          backLabel="Basket"
+        />
         <main className="shop-main handoff-page">
           <h1>Your basket is not ready to order.</h1>
           <p>
@@ -37,8 +42,13 @@ const HandoffPage = () => {
   }
 
   return (
-    <div className="page">
-      <Header />
+    <div className="page checkout-page">
+      <Header basketCount={count} />
+      <CheckoutHeader
+        title="Order on WhatsApp"
+        backTo="/cart"
+        backLabel="Basket"
+      />
       <main className="shop-main handoff-page">
         <Link to="/cart">← Basket</Link>
         <h1>Order on WhatsApp</h1>
@@ -81,4 +91,6 @@ const HandoffPage = () => {
   );
 };
 
-export const Route = createFileRoute("/handoff")({ component: HandoffPage });
+export const Route = createFileRoute("/_catalog/handoff")({
+  component: HandoffPage,
+});

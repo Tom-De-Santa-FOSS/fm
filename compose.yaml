@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: paradedb/paradedb:0.26.4
+    environment:
+      POSTGRES_DB: fm
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d fm"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - fm_postgres:/var/lib/postgresql/
+
+volumes:
+  fm_postgres:

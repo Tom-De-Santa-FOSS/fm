@@ -6,7 +6,10 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vite dev --port 3000",
+    "dev": "just dev",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "bun tools/seed.ts",
     "generate-routes": "vite build",
     "build": "vite build",
     "preview": "vite preview",
@@ -16,9 +19,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
-    "@fontsource-variable/geist": "^5.3.0",
     "@fontsource/poppins": "^5.3.0",
-    "@phosphor-icons/react": "^2.1.10",
     "@tanstack/react-router": "1.170.46",
     "@tanstack/react-start": "1.169.4",
     "@tanstack/react-virtual": "^3.14.25",
@@ -38,8 +39,11 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "drizzle-kit": "^0.31.11",
+    "drizzle-orm": "^0.45.4",
     "oxfmt": "^0.76.0",
     "oxlint": "1.90.0",
+    "postgres": "^4.0.0",
     "tailwindcss": "^4.3.4",
     "typescript": "^6.0.2",
     "ultracite": "^8.1.1",

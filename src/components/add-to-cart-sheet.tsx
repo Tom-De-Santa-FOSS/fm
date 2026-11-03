@@ -1,7 +1,7 @@
 import { Drawer } from "@base-ui/react/drawer";
 import { Radio } from "@base-ui/react/radio";
 import { RadioGroup } from "@base-ui/react/radio-group";
-import { CheckIcon, XIcon } from "@phosphor-icons/react/ssr";
+import { Check, X } from "lucide-react";
 import { useState } from "react";
 
 import { defaultChickenCut, useCart } from "../lib/cart";
@@ -79,7 +79,7 @@ export const AddToCartSheet = ({
                 className="sheet-close"
                 aria-label="Close amount selection"
               >
-                <XIcon size={20} />
+                <X size={20} />
               </Drawer.Close>
             </div>
             <div className="sheet-scroll">
@@ -121,7 +121,7 @@ export const AddToCartSheet = ({
                           className="weight-option-check"
                           aria-hidden="true"
                         >
-                          <CheckIcon size={16} weight="bold" />
+                          <Check size={16} strokeWidth={3} />
                         </Radio.Indicator>
                       </Radio.Root>
                     </label>

@@ -12,7 +12,6 @@ import {
   isProductQuantity,
   productLineTotal,
   productQuantityStep,
-  products,
 } from "./products";
 import type { Product } from "./products";
 
@@ -53,7 +52,11 @@ export const defaultChickenCut = (product: Product): ChickenCut | undefined => {
 const isChickenCut = (product: Product, cut: string): cut is ChickenCut =>
   chickenCutsFor(product).some((option) => option === cut);
 
-export const productForCut = (product: Product, cut?: ChickenCut): Product => {
+export const productForCut = (
+  product: Product,
+  cut: ChickenCut | undefined,
+  products: Product[]
+): Product => {
   if (product.id !== 2 && product.id !== 3) {
     return product;
   }
@@ -118,7 +121,7 @@ const cartTotals = (lines: CartLine[]) => {
 };
 
 // oxlint-disable-next-line complexity -- Local storage needs legacy and chicken entry validation at the read boundary.
-const loadCart = (): CartLine[] => {
+const loadCart = (products: Product[]): CartLine[] => {
   try {
     const saved = window.localStorage.getItem(cartStorageKey);
 
@@ -169,7 +172,7 @@ const loadCart = (): CartLine[] => {
             : "Simple cut";
       }
 
-      product = productForCut(product, cut);
+      product = productForCut(product, cut, products);
       const key = lineKey(product, cut);
 
       const quantity =
@@ -234,20 +237,24 @@ const saveCart = (lines: CartLine[]) => {
   }
 };
 
-export const CartProvider = ({ children }: { children: ReactNode }) => {
+export const CartProvider = ({
+  children,
+  products,
+}: {
+  children: ReactNode;
+  products: Product[];
+}) => {
   const [lines, setLines] = useState<CartLine[]>([]);
   const linesRef = useRef(lines);
 
   useEffect(() => {
-    const restored = loadCart();
+    const restored = loadCart(products);
     linesRef.current = restored;
 
-    if (restored.length > 0) {
-      // Restore after hydration so the server and first client render match.
-      // oxlint-disable-next-line react/set-state-in-effect -- Browser storage cannot be read during SSR.
-      setLines(restored);
-    }
-  }, []);
+    // Restore after hydration so the server and first client render match.
+    // oxlint-disable-next-line react/set-state-in-effect -- Browser storage cannot be read during SSR.
+    setLines(restored);
+  }, [products]);
 
   const value = useMemo<CartValue>(() => {
     const { count, total } = cartTotals(lines);
@@ -270,7 +277,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           return null;
         }
 
-        const product = productForCut(requestedProduct, cut);
+        const product = productForCut(requestedProduct, cut, products);
         const key = lineKey(product, cut);
         const found = linesRef.current.find((item) => item.key === key);
         const quantity = (found?.quantity ?? 0) + amount;
@@ -317,7 +324,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           return { quantity: 0, total: commit(next) };
         }
 
-        const product = productForCut(found.product, cut);
+        const product = productForCut(found.product, cut, products);
         const nextKey = lineKey(product, cut);
 
         const existing = linesRef.current.find(
@@ -327,7 +334,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         const quantity =
           (update.quantity ?? found.quantity) + (existing?.quantity ?? 0);
 
-        if (!isProductQuantity(product, quantity)) {
+        const reducing =
+          nextKey === key &&
+          quantity > 0 &&
+          quantity < found.quantity &&
+          Number.isInteger(quantity / productQuantityStep(product));
+
+        if (!isProductQuantity(product, quantity) && !reducing) {
           return null;
         }
 
@@ -358,7 +371,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       lines,
       total,
     };
-  }, [lines]);
+  }, [lines, products]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
