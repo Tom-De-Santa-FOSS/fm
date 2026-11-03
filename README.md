@@ -34,6 +34,14 @@ bun run deploy
 
 Remote migrations do not seed production. The initial deployment copied all 18 maintained PostgreSQL rows into D1 and checked every column against the source. Keep a separate export before future data migrations. Builds write `.cloudflare/output/v0`; `bun run preview` serves the built app in the Workers runtime.
 
+### GitHub Actions
+
+Gitea remains the source repository. Its push mirror updates [Tom-De-Santa-FOSS/fm](https://github.com/Tom-De-Santa-FOSS/fm) on GitHub after each push. Commit workflow changes to Gitea, not directly to the mirror.
+
+`.github/workflows/deploy.yml` checks and builds pull requests without deployment credentials. Pushes to mirrored `main` also apply pending D1 migrations, deploy the validated build with `cf`, and check `https://givelavish.com/`. You can rerun deployment using the workflow's manual trigger on `main`. Production runs do not cancel an in-progress migration or deployment.
+
+The GitHub repository secret `CLOUDFLARE_API_TOKEN` holds a dedicated deployment token. It grants Workers deployment and D1 write access in the configured account, plus zone read and Workers route write access for `givelavish.com`. Credentials are passed only to the migration/deployment step. The account ID comes from `cloudflare.config.ts`. The workflow never runs the development seed against production. Review committed migrations before merging to `main`, since they will run automatically.
+
 Review the Rs 600/kg prices before applying `0002_split_chicken_cuts.sql` remotely. It renames product #1 only if it still has the original combined name, preserves its price, and inserts Karahi (#19) and Biryani (#20) without overwriting existing rows. `bun run db:seed` is local-only; use `bun run db:migrate:remote` for these production changes.
 
 No paid Workers subscription is required. Workers Free includes 100,000 dynamic requests/day and 10 ms CPU/request; D1 Free includes 5 million rows read/day, 100,000 rows written/day, and 5 GB total storage. Limits are shared across the account, and exceeding free limits causes requests to fail rather than charging overages. Static asset requests are free. See [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/) and [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
