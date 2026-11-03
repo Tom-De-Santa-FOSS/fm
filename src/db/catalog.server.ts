@@ -1,23 +1,17 @@
-import { and, asc, eq, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/postgres-js";
+import { env } from "cloudflare:workers";
+import { and, asc, eq, getTableColumns, sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
 
 import type { Product } from "../lib/products";
 import { products } from "./schema";
 
-const url = process.env.DATABASE_URL;
+const database = () => drizzle(env.DB);
 
-if (!url) {
-  throw new Error("DATABASE_URL is required for the product catalog");
-}
-
-const db = drizzle(url);
-
-// The DB owns prices and availability. The initial seed preserves the old catalog order.
 export const listProducts = (): Promise<Product[]> =>
-  db.select().from(products).orderBy(asc(products.id));
+  database().select().from(products).orderBy(asc(products.id));
 
 export const getProduct = async (id: number): Promise<Product | undefined> => {
-  const rows = await db
+  const rows = await database()
     .select()
     .from(products)
     .where(eq(products.id, id))
@@ -26,7 +20,40 @@ export const getProduct = async (id: number): Promise<Product | undefined> => {
   return rows[0];
 };
 
+// One insertion, deletion, substitution, or adjacent transposition.
+const isTypo = (word: string, term: string) => {
+  if (Math.abs(word.length - term.length) > 1) {
+    return false;
+  }
+
+  let index = 0;
+
+  while (
+    index < Math.min(word.length, term.length) &&
+    word[index] === term[index]
+  ) {
+    index += 1;
+  }
+
+  if (word.slice(index + 1) === term.slice(index + 1)) {
+    return true;
+  }
+
+  if (word.length !== term.length) {
+    return word.length > term.length
+      ? word.slice(index + 1) === term.slice(index)
+      : word.slice(index) === term.slice(index + 1);
+  }
+
+  return (
+    word[index] === term[index + 1] &&
+    word[index + 1] === term[index] &&
+    word.slice(index + 2) === term.slice(index + 2)
+  );
+};
+
 export const searchProducts = async (query: string, category?: string) => {
+  const db = database();
   const term = query.trim().slice(0, 100);
   let filter = category ? eq(products.tag, category) : undefined;
 
@@ -38,34 +65,46 @@ export const searchProducts = async (query: string, category?: string) => {
     return db.select().from(products).where(filter).orderBy(asc(products.id));
   }
 
-  // Name outranks category and enrichment; keep fuzzy matches behind exact token matches.
-  const match = sql`${products.name} &&& ${term}::pdb.boost(4) OR ${products.tag} &&& ${term}::pdb.boost(2) OR ${products.ai_keywords} &&& ${term} OR ${products.description} &&& ${term}`;
-  const rank = sql`pdb.score(${products.id})`;
+  // Tokenize user input rather than accepting FTS operators or query syntax.
+  const tokens = term.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
 
-  const exact = await db
-    .select()
-    .from(products)
-    .where(and(filter, sql`(${match})`))
-    .orderBy(sql`${rank} DESC`, asc(products.id))
-    .limit(60);
+  if (!tokens.length) {
+    return [];
+  }
+
+  const search = (match: string) =>
+    db
+      .select(getTableColumns(products))
+      .from(products)
+      .innerJoin(sql`products_fts`, sql`products_fts.rowid = ${products.id}`)
+      .where(and(filter, sql`products_fts MATCH ${match}`))
+      .orderBy(sql`bm25(products_fts, 4, 2, 1, 1)`, asc(products.id))
+      .limit(60);
+
+  const exact = await search(tokens.map((token) => `"${token}"`).join(" AND "));
 
   if (exact.length) {
     return exact;
   }
 
-  if (term.length < 2) {
-    return [];
-  }
+  // FTS5 has no fuzzy operator. Expand against the indexed vocabulary only
+  // after exact search misses; short words allow prefixes but not typos.
+  const { results: vocabulary } = await env.DB.prepare(
+    "SELECT term FROM products_vocab WHERE col IN ('name', 'ai_keywords')"
+  ).all<{ term: string }>();
 
-  const fallback =
-    term.length >= 4
-      ? sql`(${products.name} &&& ${term}::pdb.fuzzy(1, t, t) OR ${products.ai_keywords} &&& ${term}::pdb.fuzzy(1, t, t))`
-      : sql`(${products.name} &&& ${term}::pdb.fuzzy(0, t) OR ${products.ai_keywords} &&& ${term}::pdb.fuzzy(0, t))`;
+  const expanded = tokens.map((token) => {
+    const words = vocabulary.filter(
+      (word) => token.length >= 4 && isTypo(word.term, token)
+    );
 
-  return await db
-    .select()
-    .from(products)
-    .where(and(filter, fallback))
-    .orderBy(sql`${rank} DESC`, asc(products.id))
-    .limit(60);
+    const alternatives = new Set([
+      `"${token}"*`,
+      ...words.map((word) => `"${word.term.replaceAll('"', '""')}"`),
+    ]);
+
+    return `{name ai_keywords} : (${[...alternatives].join(" OR ")})`;
+  });
+
+  return search(expanded.join(" AND "));
 };

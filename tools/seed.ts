@@ -1,13 +1,7 @@
-import { drizzle } from "drizzle-orm/postgres-js";
+import { execFileSync } from "node:child_process";
 
-import { products as table } from "../src/db/schema";
+import { databaseId } from "../cloudflare.config";
 import { products } from "./seed-products";
-
-const url = process.env.DATABASE_URL;
-
-if (!url) {
-  throw new Error("DATABASE_URL is required");
-}
 
 // Curated alternate names and use-cases. Replace or expand these when catalog owners approve them.
 const keywords = {
@@ -38,21 +32,38 @@ const keywordMap = new Map<number, string>(
   ])
 );
 
-const db = drizzle(url);
+// Local only. Production imports use a reviewed export of the maintained catalog.
+const statements = products.map((product) => {
+  const values = [
+    product.id,
+    product.name,
+    product.tag,
+    product.description,
+    product.image_url,
+    product.price_rs,
+    product.unit,
+    Number(product.available),
+    keywordMap.get(product.id) ?? "",
+  ].map((value) => `'${String(value).replaceAll("'", "''")}'`);
 
-// Upsert only known IDs; don't delete catalog entries added after this initial import.
-await db
-  .insert(table)
-  .values(
-    products.map((product) => ({
-      ...product,
-      ai_keywords: keywordMap.get(product.id) ?? "",
-    }))
-  )
-  .onConflictDoNothing({ target: table.id });
+  return `INSERT INTO products (id, name, tag, description, image_url, price_rs, unit, available, ai_keywords) VALUES (${values.join(", ")}) ON CONFLICT(id) DO NOTHING;`;
+});
+
+execFileSync(
+  "cf",
+  [
+    "d1",
+    "raw",
+    databaseId,
+    "--sql",
+    statements.join("\n"),
+    "--local",
+    "--persist-to",
+    ".cloudflare/state",
+  ],
+  { stdio: "pipe" }
+);
 
 console.log(
   `Imported up to ${products.length} catalog products (existing rows unchanged).`
 );
-
-await db.$client.end();
