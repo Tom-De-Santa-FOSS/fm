@@ -3,6 +3,7 @@ name: Deploy
 on:
   push:
     branches: [main]
+    paths-ignore: ["**/*.md"]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -28,14 +29,24 @@ jobs:
         with:
           node-version: "24"
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        id: bun
         with:
           bun-version: "1.4.4"
+      - name: Cache Bun packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-bun-${{ steps.bun.outputs.bun-revision }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-bun-${{ steps.bun.outputs.bun-revision }}-
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      - name: Check
-        run: bun run check
-      - name: Build
-        run: bunx --no-install cf build
+      - name: Check and build
+        run: |
+          bun run check &
+          check_pid=$!
+          bunx --no-install cf build
+          wait "$check_pid"
       - name: Validate deployment
         run: bunx --no-install cf deploy --prebuilt --mode production --dry-run
       - name: Migrate D1 and deploy
