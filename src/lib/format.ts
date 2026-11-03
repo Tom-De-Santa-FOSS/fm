@@ -1,0 +1,21 @@
+import { isVariableWeight, productWeightGrams } from "./products";
+import type { Product } from "./products";
+
+export const formatMoney = (amount: number) =>
+  `Rs ${amount.toLocaleString("en-PK", { maximumFractionDigits: 2 })}`;
+
+export const formatQuantity = (product: Product, quantity: number) => {
+  const unitGrams = productWeightGrams(product);
+
+  if (unitGrams !== null) {
+    const grams = Math.round(quantity * unitGrams);
+
+    return grams < 1000 ? `${grams} g` : `${grams / 1000} kg`;
+  }
+
+  if (isVariableWeight(product)) {
+    return `${quantity} ${product.id === 4 ? "chickens" : "cuts"}`;
+  }
+
+  return `${quantity} ${product.unit}`;
+};

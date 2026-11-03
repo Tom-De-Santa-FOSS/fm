@@ -1,5 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 
+import { CartProvider } from "../lib/cart";
+
 import appCss from "../styles.css?url";
 
 const RootDocument = ({ children }: { children: React.ReactNode }) => (
@@ -8,7 +10,7 @@ const RootDocument = ({ children }: { children: React.ReactNode }) => (
       <HeadContent />
     </head>
     <body>
-      {children}
+      <CartProvider>{children}</CartProvider>
 
       <Scripts />
     </body>
@@ -32,7 +34,12 @@ export const Route = createRootRoute({
         name: "viewport",
       },
       {
-        title: "fm",
+        title: "Fresh Market | Groceries delivered in Sukkur",
+      },
+      {
+        content:
+          "Shop chicken, vegetables, eggs and bakery essentials in Sukkur. Send your order to Fresh Market on WhatsApp.",
+        name: "description",
       },
     ],
   }),
