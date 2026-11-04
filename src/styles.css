@@ -4,6 +4,7 @@
 @import "@fontsource/poppins/600.css";
 @import "@fontsource/poppins/700.css";
 @import "@fontsource/poppins/800.css";
+@import "@fontsource/pacifico/latin-400.css";
 
 :root {
   --background: #fff;
@@ -81,6 +82,65 @@ img {
 }
 .site-header {
   background: white;
+}
+.banner {
+  background: var(--shop-green);
+  color: white;
+}
+.banner-inner {
+  display: flex;
+  align-items: center;
+  max-width: 1440px;
+  margin: auto;
+  padding: 0 8px;
+}
+.banner button {
+  flex: none;
+  width: 28px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+}
+.banner-scroller {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  font-size: 12px;
+  font-weight: 500;
+}
+.banner-scroller::-webkit-scrollbar {
+  display: none;
+}
+.banner-scroller:focus-visible {
+  outline-color: white;
+  outline-offset: -2px;
+}
+.banner-scroller p {
+  flex: 0 0 100%;
+  margin: 0;
+  padding: 8px;
+  scroll-snap-align: start;
+  text-align: center;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+@media (min-width: 640px) {
+  .banner-scroller {
+    font-size: 14px;
+  }
 }
 .checkout-header {
   display: none;
@@ -202,6 +262,122 @@ img {
   width: calc(100% - 48px);
   margin: 0 auto;
   flex: 1;
+}
+.promotion {
+  width: min(100%, 308px);
+  margin: 8px auto 10px;
+  padding: 16px;
+  border-radius: 16px;
+  text-align: center;
+}
+.promotion-player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #202520;
+}
+.promotion-player video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.promotion-controls {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 8px 8px;
+  background: linear-gradient(transparent, #0009);
+}
+.promotion-seek {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  touch-action: none;
+  cursor: pointer;
+}
+.promotion-seek-track {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: #ffffff66;
+}
+.promotion-seek-buffer,
+.promotion-seek-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: inherit;
+}
+.promotion-seek-buffer {
+  width: var(--media-slider-buffer);
+  background: #ffffff66;
+}
+.promotion-seek-fill {
+  width: var(--media-slider-fill);
+  background: white;
+}
+.promotion-seek-thumb {
+  position: absolute;
+  left: var(--media-slider-fill);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  transform: translateX(-50%);
+}
+.promotion-seek[data-dragging] .promotion-seek-thumb {
+  left: var(--media-slider-pointer);
+}
+.promotion-seek[data-dragging] .promotion-seek-fill {
+  width: var(--media-slider-pointer);
+}
+.promotion-seek:focus-visible,
+.promotion-seek-thumb:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+.promotion-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.promotion-actions button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: white;
+}
+.promotion-actions button:last-child {
+  margin-left: auto;
+}
+.promotion-actions button:focus-visible {
+  outline-color: white;
+}
+.promotion-actions button:active {
+  background: #ffffff30;
+}
+.promotion-player:fullscreen video {
+  object-fit: contain;
+}
+.promotion p {
+  margin: 10px 0 0;
+  color: var(--shop-green);
+  font-family: "Pacifico", cursive;
+  font-size: 23px;
+  line-height: 32px;
 }
 .category-nav {
   width: 100%;
@@ -1139,6 +1315,9 @@ img {
   .site-header--search .header-inner {
     display: contents;
   }
+  .site-header--search .banner {
+    display: block;
+  }
   .site-header--search .header-brand-row {
     display: flex;
     align-items: center;
@@ -1160,7 +1339,7 @@ img {
   }
 }
 @media (max-width: 640px) {
-  .checkout-page > .site-header {
+  .checkout-page > .site-header .header-inner {
     display: none;
   }
   .checkout-header {

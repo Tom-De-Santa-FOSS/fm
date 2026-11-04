@@ -8,6 +8,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { AddToCartSheet } from "../components/add-to-cart-sheet";
+import { PromotionVideo } from "../components/promotion-video";
 import {
   BasketDock,
   CategoryNav,
@@ -137,6 +138,7 @@ const ShopLayout = () => {
         }}
       />
       <main className="shop-main">
+        {!submitted.query && <PromotionVideo />}
         <CategoryNav category={category} onCategory={setCategory} />
         {searchError === searchKey && (
           <section className="no-results" role="alert">
