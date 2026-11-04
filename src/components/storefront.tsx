@@ -7,6 +7,7 @@ import { useCart } from "../lib/cart";
 import { formatMoney } from "../lib/format";
 import type { Product } from "../lib/products";
 import { isVariableWeight } from "../lib/products";
+import { Banner } from "./banner";
 import { Button } from "./ui/button";
 
 export const Header = ({
@@ -26,6 +27,7 @@ export const Header = ({
     <header
       className={onSearch ? "site-header site-header--search" : "site-header"}
     >
+      <Banner />
       <div className="header-inner">
         <div className="header-brand-row">
           <Link

@@ -82,6 +82,66 @@ img {
 .site-header {
   background: white;
 }
+.banner {
+  background: var(--shop-green);
+  color: white;
+}
+.banner-inner {
+  display: flex;
+  align-items: center;
+  max-width: 1440px;
+  margin: auto;
+  padding: 0 8px;
+}
+.banner button {
+  flex: none;
+  width: 28px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+}
+.banner-scroller {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  font-size: 12px;
+  font-weight: 500;
+}
+.banner-scroller::-webkit-scrollbar {
+  display: none;
+}
+.banner-scroller:focus-visible {
+  outline-color: white;
+  outline-offset: -2px;
+}
+.banner-scroller p {
+  flex: 0 0 100%;
+  margin: 0;
+  padding: 8px;
+  scroll-snap-align: start;
+  text-align: center;
+  white-space: nowrap;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+@media (min-width: 640px) {
+  .banner-scroller {
+    font-size: 14px;
+  }
+}
 .checkout-header {
   display: none;
 }
@@ -202,6 +262,29 @@ img {
   width: calc(100% - 48px);
   margin: 0 auto;
   flex: 1;
+}
+.promotion {
+  width: min(100%, 308px);
+  margin: 8px auto 10px;
+  padding: 16px;
+  border-radius: 16px;
+  text-align: center;
+}
+.promotion-player {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+}
+.promotion-player video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.promotion p {
+  margin: 10px 0 0;
+  color: var(--shop-green);
+  font-size: 23px;
+  line-height: 32px;
 }
 .category-nav {
   width: 100%;
@@ -1139,6 +1222,9 @@ img {
   .site-header--search .header-inner {
     display: contents;
   }
+  .site-header--search .banner {
+    display: block;
+  }
   .site-header--search .header-brand-row {
     display: flex;
     align-items: center;
@@ -1160,7 +1246,7 @@ img {
   }
 }
 @media (max-width: 640px) {
-  .checkout-page > .site-header {
+  .checkout-page > .site-header .header-inner {
     display: none;
   }
   .checkout-header {
