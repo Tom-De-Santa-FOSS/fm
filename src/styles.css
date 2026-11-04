@@ -507,6 +507,34 @@ img {
 .card-action:hover {
   background: #0f6e29;
 }
+.card-quantity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  margin-top: auto;
+  color: var(--shop-green);
+  font-size: 14px;
+  font-weight: 700;
+}
+.card-quantity button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+.card-quantity button:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+.card-quantity button:disabled {
+  opacity: 0.45;
+}
+.card-quantity span {
+  text-align: center;
+}
 .site-footer {
   background: var(--shop-pale);
   padding: 25px max(24px, calc((100vw - 1300px)/2));
@@ -1608,15 +1636,27 @@ img {
     align-items: stretch;
     flex-direction: column;
   }
+  .shop-page--basket .site-footer {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
   .basket-dock {
     display: flex;
-    position: sticky;
-    bottom: 0;
-    background: var(--shop-green);
-    color: white;
-    padding: 13px 18px;
-    font-weight: 700;
+    position: fixed;
+    z-index: 5;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    left: 16px;
+    min-height: 60px;
+    align-items: center;
     justify-content: space-between;
+    gap: 16px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    background: var(--shop-green);
+    box-shadow: 0 8px 24px #102d1940;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
   }
 }
 @media (prefers-reduced-motion: reduce) {

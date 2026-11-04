@@ -1,22 +1,29 @@
 import { Link } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
-import { ArrowRight, Search, ShoppingBag, X } from "lucide-react";
+import { ArrowRight, Plus, Search, ShoppingBag, Trash2, X } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
 import { useCart } from "../lib/cart";
-import { formatMoney } from "../lib/format";
+import { formatMoney, formatQuantity } from "../lib/format";
 import type { Product } from "../lib/products";
-import { isVariableWeight } from "../lib/products";
+import {
+  isProductQuantity,
+  isVariableWeight,
+  productQuantityStep,
+  productWeightGrams,
+} from "../lib/products";
 import { Banner } from "./banner";
 import { Button } from "./ui/button";
 
 export const Header = ({
   basketCount,
+  showBanner = false,
   search = "",
   onSearch,
   onSearchSubmit,
 }: {
   basketCount?: number;
+  showBanner?: boolean;
   search?: string;
   onSearch?: (value: string) => void;
   onSearchSubmit?: (value: string) => void;
@@ -27,7 +34,7 @@ export const Header = ({
     <header
       className={onSearch ? "site-header site-header--search" : "site-header"}
     >
-      <Banner />
+      {showBanner && <Banner />}
       <div className="header-inner">
         <div className="header-brand-row">
           <Link
@@ -214,6 +221,11 @@ export const ProductCard = ({
   onChoose: (product: Product) => void;
 }) => {
   const variable = isVariableWeight(product);
+  const { lines, add, remove } = useCart();
+
+  const quantity = lines.find(
+    (line) => line.product.id === product.id
+  )?.quantity;
 
   return (
     <article className="product-card">
@@ -248,13 +260,43 @@ export const ProductCard = ({
           {variable ? "Per kg · weight varies" : `Per ${product.unit}`}
         </span>
       </div>
-      <Button
-        className="card-action"
-        disabled={!product.available}
-        onClick={() => onChoose(product)}
-      >
-        {product.available ? "Add to basket" : "Unavailable"}
-      </Button>
+      {quantity === undefined ? (
+        <Button
+          className="card-action"
+          disabled={!product.available}
+          onClick={() => onChoose(product)}
+        >
+          {product.available ? "Add to basket" : "Unavailable"}
+        </Button>
+      ) : (
+        <div className="card-quantity">
+          <button
+            type="button"
+            aria-label={`Remove ${product.name} from basket`}
+            onClick={() => remove(product.id)}
+          >
+            <Trash2 size={18} aria-hidden="true" />
+          </button>
+          <span>
+            {productWeightGrams(product) === null
+              ? quantity
+              : formatQuantity(product, quantity)}
+          </span>
+          <button
+            type="button"
+            aria-label={`Add more ${product.name} to basket`}
+            disabled={
+              !isProductQuantity(
+                product,
+                quantity + productQuantityStep(product)
+              )
+            }
+            onClick={() => add(product, productQuantityStep(product))}
+          >
+            <Plus size={20} aria-hidden="true" />
+          </button>
+        </div>
+      )}
     </article>
   );
 };
@@ -291,7 +333,7 @@ export const BasketDock = () => {
         {lines.some(({ product }) => isVariableWeight(product)) ? "~" : ""}
         {formatMoney(total)}
       </span>
-      <ArrowRight size={18} />
+      <ArrowRight size={22} aria-hidden="true" />
     </Link>
   );
 };

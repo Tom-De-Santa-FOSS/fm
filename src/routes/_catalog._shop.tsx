@@ -125,9 +125,12 @@ const ShopLayout = () => {
     : [[submitted.query ? "Search results" : category, visible] as const];
 
   return (
-    <div className="page">
+    <div
+      className={count ? "page shop-page shop-page--basket" : "page shop-page"}
+    >
       <Header
         basketCount={count}
+        showBanner
         search={query}
         onSearch={setQuery}
         onSearchSubmit={(value) => {
