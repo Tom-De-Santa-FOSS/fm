@@ -39,7 +39,7 @@ export const products: Omit<Product, "ai_keywords">[] = [
     description: "Boneless chicken cut into cubes, 1 kg.",
     id: 2,
     image_url:
-      "https://images.freshmarketpakistan.com/chicken-boneless-cubes.jpg",
+      "https://images.freshmarketpakistan.com/chicken-boneless-cubes.png",
     name: "Boneless Chicken Cubes",
     price_rs: 1000,
     tag: "Chicken",
