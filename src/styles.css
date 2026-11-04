@@ -128,7 +128,6 @@ img {
   padding: 8px;
   scroll-snap-align: start;
   text-align: center;
-  white-space: nowrap;
 }
 .sr-only {
   position: absolute;
