@@ -61,7 +61,7 @@ export const products: Omit<Product, "ai_keywords">[] = [
     description:
       "Whole chicken at Rs 900 per kg. Final price depends on its weight.",
     id: 4,
-    image_url: "https://images.freshmarketpakistan.com/chicken-whole.jpg",
+    image_url: "https://images.freshmarketpakistan.com/chicken-whole.png",
     name: "Whole Chicken",
     price_rs: 900,
     tag: "Chicken",
