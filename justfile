@@ -1,4 +1,4 @@
 dev:
     bun run db:migrate
     bun run db:seed
-    cf dev
+    bunx --no-install vite dev

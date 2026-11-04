@@ -10,6 +10,7 @@ dist-ssr
 .tanstack
 .wrangler
 .cloudflare
+worker-configuration.d.ts
 .output
 .vinxi
 __unconfig*

@@ -1,6 +1,6 @@
 # Fresh Market storefront
 
-TanStack Start storefront for Fresh Market in Sukkur, deployed on Cloudflare Workers with a D1 SQLite catalog. Server functions access the `DB` binding; browsers never connect to the database. PostgreSQL and Docker are no longer required.
+TanStack Start storefront for Fresh Market in Sukkur, built with Nitro and deployed on Cloudflare Workers with a D1 SQLite catalog. Server functions access the `DB` binding; browsers never connect to the database. PostgreSQL and Docker are no longer required.
 
 ## Local development
 
@@ -9,7 +9,9 @@ bun install
 bun dev
 ```
 
-Install Node.js 22.18+, `cf`, and `just`. `bun dev` applies SQLite migrations, inserts missing seed products, and starts `cf dev` on port 3000. Local D1 data lives in `.cloudflare/state`, separate from production. `bun run db:migrate` and `bun run db:seed` only modify that local database. The chicken-cut migration renames product #1 only if it still has the original combined name; the seed leaves all existing products unchanged.
+Install Node.js 22.18+ and `just`. The project installs `cf`, Wrangler, and Miniflare as development dependencies. `bun dev` applies SQLite migrations, inserts missing seed products, and starts Vite with Nitro on port 3000. Nitro emulates D1 with Miniflare; local data lives in `.wrangler/state`, shared with the built app's preview and separate from production. `bun run db:migrate` and `bun run db:seed` only modify that local database. The chicken-cut migration renames product #1 only if it still has the original combined name; the seed leaves all existing products unchanged.
+
+The previous Cloudflare Vite plugin kept local data in `.cloudflare/state`. That directory is left untouched. If it contains maintained local products, export them before switching and import them into the new local database rather than replacing them with the seed.
 
 ## Database and search
 
@@ -23,26 +25,31 @@ Prices and availability belong to D1. Edit maintained products there rather than
 
 ## Deployment
 
-`cloudflare.config.ts` pins the personal Cloudflare account, Worker `fm`, custom domain `freshmarketpakistan.com`, and D1 database `fm-catalog` in APAC. Sign in using `cf auth login` before remote operations.
+`nitro.config.ts` selects the `cloudflare_module` preset and declares the existing account, Worker `fm`, custom domain `freshmarketpakistan.com`, and D1 database `fm-catalog` in APAC. Nitro generates `.output/server/wrangler.json`, including the Worker entry, static assets, compatibility settings, and module rules. There is no hand-written `cloudflare.config.ts` or Wrangler configuration file.
+
+Build before checking types or deploying. The build generates `worker-configuration.d.ts` from Nitro's output, so bindings and runtime types match the actual deployed configuration. Neither generated file is committed.
 
 ```bash
+bun run build
 bun run check
-cf deploy --dry-run
+bun run deploy --dry-run
 bun run db:migrate:remote
 bun run deploy
 ```
 
-Remote migrations do not seed production. The initial deployment copied all 18 maintained PostgreSQL rows into D1 and checked every column against the source. Keep a separate export before future data migrations. Builds write `.cloudflare/output/v0`; `bun run preview` serves the built app in the Workers runtime.
+Wrangler deploys Nitro's generated output without rebuilding. Use `wrangler login` for local deployment and `cf auth login` for remote D1 operations; the CLIs do not share OAuth logins. CI uses `CLOUDFLARE_API_TOKEN` for both. Do not use `cf build`, `cf dev`, or `cf deploy` here: Nitro does not emit the Build Output format those commands require, and automatic setup would recreate the configuration this integration replaces.
+
+Remote migrations do not seed production. The initial deployment copied all 18 maintained PostgreSQL rows into D1 and checked every column against the source. Keep a separate export before future data migrations. Builds write `.output`; `bun run preview` serves the built app in the Workers runtime.
 
 ### GitHub Actions
 
 Gitea remains the source repository. Its push mirror updates [Tom-De-Santa-FOSS/fm](https://github.com/Tom-De-Santa-FOSS/fm) on GitHub after each push. Commit workflow changes to Gitea, not directly to the mirror.
 
-`.github/workflows/deploy.yml` checks and builds pull requests without deployment credentials. Pushes to mirrored `main` also apply pending D1 migrations, deploy the validated build with `cf`, and check `https://freshmarketpakistan.com/`. You can rerun deployment using the workflow's manual trigger on `main`. Production runs do not cancel an in-progress migration or deployment.
+`.github/workflows/deploy.yml` builds Nitro output, generates binding types, checks the code, and validates deployment without credentials on pull requests. Pushes to mirrored `main` also apply pending D1 migrations with `cf`, deploy the same generated output with Wrangler, and check `https://freshmarketpakistan.com/`. You can rerun deployment using the workflow's manual trigger on `main`. Manual runs on other branches validate without deploying. Production runs do not cancel an in-progress migration or deployment.
 
-The GitHub repository secret `CLOUDFLARE_API_TOKEN` holds a dedicated deployment token. It grants Workers deployment and D1 write access in the configured account, plus zone read and Workers route write access for `freshmarketpakistan.com`. Credentials are passed only to the migration/deployment step. The account ID comes from `cloudflare.config.ts`. The workflow never runs the development seed against production. Review committed migrations before merging to `main`, since they will run automatically.
+The GitHub repository secret `CLOUDFLARE_API_TOKEN` holds a dedicated deployment token. It grants Workers deployment and D1 write access in the configured account, plus zone read and Workers route write access for `freshmarketpakistan.com`. Credentials are passed only to the migration/deployment step. The deployment account comes from Nitro's generated config; the remote migration script explicitly selects the same account. The workflow never runs the development seed against production. Review committed migrations before merging to `main`, since they will run automatically.
 
-For speed, the workflow caches Bun's package store by OS, architecture, Bun revision, and lockfile. A matching older store can supply unchanged packages when the lockfile changes; `bun install --frozen-lockfile` still verifies and installs the current dependency graph. This follows [GitHub's Bun cache example](https://github.com/actions/cache/blob/main/examples.md#bun) and [Superset's production workflow](https://github.com/superset-sh/superset/blob/main/.github/workflows/deploy-production.yml). Bun's setup action also caches its pinned executable. Checks and the build run concurrently, and both must succeed before migration or deployment. Builds run once per commit and deployment uses `--prebuilt`; production bundles, D1 data, and credentials are never cached. Documentation-only pushes skip deployment. Cloudflare uploads only changed static assets. Cache restore/save time can exceed the savings for this small app, so compare Actions step timings rather than assuming every cache hit is faster. The first uncached deployment job took 47 seconds (including 8 seconds each for sequential checks and build, and 2 seconds for dependency installation).
+For speed, the workflow caches Bun's package store by OS, architecture, Bun revision, and lockfile. A matching older store can supply unchanged packages when the lockfile changes; `bun install --frozen-lockfile` still verifies and installs the current dependency graph. This follows [GitHub's Bun cache example](https://github.com/actions/cache/blob/main/examples.md#bun) and [Superset's production workflow](https://github.com/superset-sh/superset/blob/main/.github/workflows/deploy-production.yml). Bun's setup action also caches its pinned executable. Builds run once per commit; production bundles, D1 data, and credentials are never cached. Documentation-only pushes skip deployment. Cloudflare uploads only changed static assets. Compare Actions step timings rather than assuming every cache hit is faster. Type checking runs after the build because it consumes the generated binding types.
 
 Review the Rs 600/kg prices before applying `0002_split_chicken_cuts.sql` remotely. It renames product #1 only if it still has the original combined name, preserves its price, and inserts Karahi (#19) and Biryani (#20) without overwriting existing rows. `bun run db:seed` is local-only; use `bun run db:migrate:remote` for these production changes.
 

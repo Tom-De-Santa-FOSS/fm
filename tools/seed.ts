@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 
-import { databaseId } from "../cloudflare.config";
+import { databaseId } from "../nitro.config";
 import { products } from "./seed-products";
 
 // Curated alternate names and use-cases. Replace or expand these when catalog owners approve them.
@@ -61,7 +61,7 @@ execFileSync(
     statements.join("\n"),
     "--local",
     "--persist-to",
-    ".cloudflare/state",
+    ".wrangler/state",
   ],
   { stdio: "pipe" }
 );
