@@ -12,18 +12,18 @@ export class WhatsAppOrderTooLongError extends Error {
 export const whatsappOrderText = (lines: CartLine[], total: number) =>
   [
     "Hi, I'd like to order:",
-    "",
     ...lines.map(({ product, quantity }) => {
-      if (isVariableWeight(product)) {
-        return `${product.name}: ${quantity} ${product.id === 4 ? "chickens" : "cuts"} at ${formatMoney(product.price_rs)}/kg. Please confirm actual weight and price.`;
-      }
+      const estimated = isVariableWeight(product);
 
-      return `${product.name}: ${formatQuantity(product, quantity)} = ${formatMoney(productLineTotal(product, quantity))} (${formatMoney(product.price_rs)} per ${product.unit})`;
+      const amount = estimated
+        ? `${quantity}x`
+        : formatQuantity(product, quantity);
+
+      return `${product.name} ${amount} = ${estimated ? "~" : ""}${formatMoney(productLineTotal(product, quantity))}`;
     }),
     "",
-    `Priced items: ${formatMoney(total)}`,
-    "Delivery charge: please confirm on WhatsApp.",
-    "Please confirm availability, whole chicken weight and the final total.",
+    `Items total: ${formatMoney(total)}`,
+    "Bill may change on WhatsApp.",
   ].join("\n");
 
 export const whatsappOrderUrl = (lines: CartLine[], total: number) => {

@@ -15,8 +15,8 @@ export const minimumOrderRs = 1000;
 export const productQuantityLimit = (product: Product): number =>
   product.available ? 10 : 0;
 
-export const isVariableWeight = (product: Product) =>
-  product.id === 4 || product.id === 5;
+export const isVariableWeight = (product: Product) => product.id === 4;
+export const isWholeKgOnly = (product: Product) => product.id === 5;
 
 // Quantity remains a multiple of the catalog's priced unit, including in saved baskets.
 export const productWeightGrams = (product: Product): number | null => {
@@ -32,6 +32,10 @@ export const productWeightGrams = (product: Product): number | null => {
 };
 
 export const productQuantityStep = (product: Product) => {
+  if (isWholeKgOnly(product)) {
+    return 1;
+  }
+
   const grams = productWeightGrams(product);
 
   return grams === null ? 1 : 250 / grams;
@@ -49,7 +53,6 @@ export const isProductQuantity = (product: Product, quantity: number) => {
   return Number.isInteger(quantity / productQuantityStep(product));
 };
 
+// A whole chicken is estimated at 1 kg until it is weighed.
 export const productLineTotal = (product: Product, quantity: number) =>
-  isVariableWeight(product)
-    ? 0
-    : Math.round(product.price_rs * quantity * 100) / 100;
+  Math.round(product.price_rs * quantity * 100) / 100;

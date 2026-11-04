@@ -31,8 +31,8 @@ const DeliveryPage = () => (
           <dd>Arrange on WhatsApp</dd>
         </div>
         <div>
-          <dt>Whole chicken & chest cuts</dt>
-          <dd>Charged by actual weight</dd>
+          <dt>Chicken</dt>
+          <dd>Whole chickens are weighed; chest cuts come in 1 kg units</dd>
         </div>
       </dl>
       <a className="solid-link" href={`https://wa.me/${whatsappNumber}`}>

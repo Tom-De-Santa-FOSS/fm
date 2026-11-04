@@ -5,7 +5,9 @@ import { useId, useState } from "react";
 import { formatQuantity } from "../lib/format";
 import {
   isProductQuantity,
+  isWholeKgOnly,
   productQuantityLimit,
+  productQuantityStep,
   productWeightGrams,
 } from "../lib/products";
 import type { Product } from "../lib/products";
@@ -34,12 +36,18 @@ export const AmountField = ({
   );
 
   const grams = productWeightGrams(product);
+  const wholeKgOnly = isWholeKgOnly(product);
   const weighted = grams !== null;
   const kilograms = weighted && unit === "kg";
   const unitScale = kilograms ? 1000 : 1;
   const scale = (grams ?? 1) / unitScale;
-  const step = weighted ? 250 / unitScale : 1;
+  const step = productQuantityStep(product) * scale;
   const label = weighted ? "Weight" : "Quantity";
+
+  const weightHint = wholeKgOnly
+    ? "Use 1 kg steps."
+    : "Use 250 g / 0.25 kg steps.";
+
   const invalid = value !== null && !isProductQuantity(product, value);
 
   return (
@@ -78,7 +86,8 @@ export const AmountField = ({
             aria-invalid={invalid}
             aria-describedby={`${id}-hint`}
           />
-          {weighted && (
+          {wholeKgOnly && <span className="amount-unit">kg</span>}
+          {weighted && !wholeKgOnly && (
             <Select
               items={(["g", "kg"] as const).map((option) => ({
                 label: option,
@@ -111,8 +120,8 @@ export const AmountField = ({
         </NumberField.Increment>
       </NumberField.Group>
       <p id={`${id}-hint`} className="amount-hint">
-        {weighted ? "Use 250 g / 0.25 kg steps." : "Choose a whole quantity."}{" "}
-        Maximum {formatQuantity(product, productQuantityLimit(product))}.
+        {weighted ? weightHint : "Choose a whole quantity."} Maximum{" "}
+        {formatQuantity(product, productQuantityLimit(product))}.
       </p>
     </NumberField.Root>
   );

@@ -24,7 +24,7 @@ const HandoffPage = () => {
           <p>
             {exceedsLimit
               ? "Reduce items that exceed the item limit before sending an order."
-              : "Priced items must reach Rs 1,000 before you can send an order."}
+              : "Estimated items must reach Rs 1,000 before you can send an order."}
           </p>
           <Link to="/cart">Review basket</Link>
         </main>

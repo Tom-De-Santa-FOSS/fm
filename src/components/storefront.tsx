@@ -285,10 +285,9 @@ export const BasketDock = () => {
   return (
     <Link to="/cart" className="basket-dock">
       <span>
-        Basket ({count}) · {formatMoney(total)}
-        {lines.some(({ product }) => product.id === 4 || product.id === 5)
-          ? " + items priced after weighing"
-          : ""}
+        Basket ({count}) ·{" "}
+        {lines.some(({ product }) => isVariableWeight(product)) ? "~" : ""}
+        {formatMoney(total)}
       </span>
       <ArrowRight size={18} />
     </Link>

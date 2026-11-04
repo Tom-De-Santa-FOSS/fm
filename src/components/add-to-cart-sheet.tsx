@@ -3,10 +3,11 @@ import { X } from "lucide-react";
 import { useState } from "react";
 
 import { useCart } from "../lib/cart";
-import { formatMoney, formatQuantity } from "../lib/format";
+import { formatMoney } from "../lib/format";
 import {
   isProductQuantity,
   isVariableWeight,
+  isWholeKgOnly,
   productLineTotal,
   productWeightGrams,
 } from "../lib/products";
@@ -28,6 +29,7 @@ export const AddToCartSheet = ({
   const [error, setError] = useState("");
   const valid = quantity !== null && isProductQuantity(product, quantity);
   const variable = isVariableWeight(product);
+  const wholeKgOnly = isWholeKgOnly(product);
   const grams = productWeightGrams(product);
 
   const changeQuantity = (value: number | null) => {
@@ -82,7 +84,7 @@ export const AddToCartSheet = ({
               <Drawer.Description className="add-sheet-description">
                 {grams === null ? "How many would you like?" : "Choose weight"}
               </Drawer.Description>
-              {grams !== null && (
+              {grams !== null && !wholeKgOnly && (
                 <WeightSelector
                   product={product}
                   grams={grams}
@@ -90,7 +92,7 @@ export const AddToCartSheet = ({
                   onValueChange={changeQuantity}
                 />
               )}
-              {grams === null && (
+              {(grams === null || wholeKgOnly) && (
                 <AmountField
                   product={product}
                   value={quantity}
@@ -99,7 +101,7 @@ export const AddToCartSheet = ({
               )}
               {variable && (
                 <p className="weighing-note">
-                  Final price confirmed after weighing.
+                  Estimate uses 1 kg each. Final price confirmed after weighing.
                 </p>
               )}
               {error && (
@@ -115,9 +117,8 @@ export const AddToCartSheet = ({
                 <span>Add to basket</span>
                 {valid && quantity !== null && (
                   <span>
-                    {variable
-                      ? formatQuantity(product, quantity)
-                      : formatMoney(productLineTotal(product, quantity))}
+                    {variable ? "~" : ""}
+                    {formatMoney(productLineTotal(product, quantity))}
                   </span>
                 )}
               </Button>

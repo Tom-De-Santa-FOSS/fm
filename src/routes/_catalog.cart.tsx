@@ -127,9 +127,8 @@ const CartPage = () => {
                       </button>
                     </div>
                     <strong>
-                      {variableWeight
-                        ? "After weighing"
-                        : formatMoney(productLineTotal(product, quantity))}
+                      {variableWeight ? "~" : ""}
+                      {formatMoney(productLineTotal(product, quantity))}
                     </strong>
                   </article>
                 );
@@ -138,7 +137,7 @@ const CartPage = () => {
             <aside className="order-summary">
               <h2>Order summary</h2>
               <div className="summary-total">
-                <span>Priced items</span>
+                <span>Estimated items total</span>
                 <strong>{formatMoney(total)}</strong>
               </div>
               <div>
@@ -146,12 +145,15 @@ const CartPage = () => {
                 <span>Confirmed in chat</span>
               </div>
               {variable && (
-                <p>Whole chicken and chest cuts are priced after weighing.</p>
+                <p>
+                  Whole chickens use a 1 kg estimate each. Final price depends
+                  on weight.
+                </p>
               )}
               {remaining > 0 && (
                 <output className="minimum-note">
-                  Add {formatMoney(remaining)} more in priced items to reach the{" "}
-                  {formatMoney(minimumOrderRs)} minimum.
+                  Add {formatMoney(remaining)} more in estimated items to reach
+                  the {formatMoney(minimumOrderRs)} minimum.
                 </output>
               )}
               {exceedsLimit && (

@@ -22,6 +22,13 @@
       "when": 1793733812521,
       "tag": "0002_split_chicken_cuts",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793733812522,
+      "tag": "0003_whole_chicken_price",
+      "breakpoints": true
     }
   ]
 }

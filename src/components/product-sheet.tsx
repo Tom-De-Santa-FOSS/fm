@@ -94,8 +94,7 @@ export const ProductSheet = ({
                 />
                 {variable && (
                   <p className="weighing-note">
-                    Priced after weighing at {formatMoney(product.price_rs)} per
-                    kg
+                    Estimated at 1 kg each. Final price depends on weight.
                   </p>
                 )}
                 {error && (
@@ -109,7 +108,7 @@ export const ProductSheet = ({
                   onClick={submit}
                 >
                   {valid && amount !== null
-                    ? `Add ${formatQuantity(product, amount)}${variable ? "" : ` · ${formatMoney(productLineTotal(product, amount))}`}`
+                    ? `Add ${formatQuantity(product, amount)} · ${variable ? "~" : ""}${formatMoney(productLineTotal(product, amount))}`
                     : "Choose an amount"}
                 </Button>
               </div>
