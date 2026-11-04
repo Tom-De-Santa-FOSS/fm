@@ -23,13 +23,9 @@ export const Route = createRootRoute({
         rel: "stylesheet",
       },
       {
-        href: "/favicon.png",
+        href: "/favicon.webp",
         rel: "icon",
-        type: "image/png",
-      },
-      {
-        href: "/favicon.png",
-        rel: "apple-touch-icon",
+        type: "image/webp",
       },
     ],
     meta: [

@@ -25,6 +25,9 @@ const CartPage = () => {
   const [error, setError] = useState("");
   const remaining = Math.max(0, minimumOrderRs - total);
 
+  const orderButtonLabel =
+    remaining > 0 ? `Add ${formatMoney(remaining)} more` : "Order on WhatsApp";
+
   const variable = lines.some(({ product }) => isVariableWeight(product));
 
   const order = () => {
@@ -73,9 +76,7 @@ const CartPage = () => {
     <div className="page checkout-page">
       <Header basketCount={count} />
       <CheckoutHeader title="Your basket" backTo="/" backLabel="Shop" />
-      <main
-        className={`shop-main basket-page${remaining > 0 ? " basket-page--incomplete" : ""}`}
-      >
+      <main className="shop-main basket-page">
         <h1 className="basket-heading">
           Your basket <small>{countLabel}</small>
         </h1>
@@ -146,14 +147,13 @@ const CartPage = () => {
               </div>
               {variable && (
                 <p>
-                  Whole chickens use a 1 kg estimate each. Final price depends
-                  on weight.
+                  Whole chickens use a 1 kg estimate each. We will confirm the
+                  final weight and price in chat.
                 </p>
               )}
               {remaining > 0 && (
                 <output className="minimum-note">
-                  Add {formatMoney(remaining)} more in estimated items to reach
-                  the {formatMoney(minimumOrderRs)} minimum.
+                  Add {formatMoney(remaining)} more
                 </output>
               )}
               {exceedsLimit && (
@@ -168,43 +168,35 @@ const CartPage = () => {
                   <a href="tel:+923337125030">Call {whatsappPhoneNumber}</a>
                 </p>
               )}
+              <Button
+                className="order-button order-button--summary"
+                disabled={remaining > 0 || exceedsLimit}
+                onClick={order}
+              >
+                {orderButtonLabel}
+                {remaining === 0 && <ArrowRight data-icon="inline-end" />}
+              </Button>
               {remaining === 0 && (
-                <>
-                  <Button
-                    className="order-button order-button--summary"
-                    disabled={exceedsLimit}
-                    onClick={order}
-                  >
-                    Order on WhatsApp <ArrowRight data-icon="inline-end" />
-                  </Button>
-                  <small>
-                    Final total confirmed on WhatsApp. Opening chat does not
-                    place an order.
-                  </small>
-                </>
+                <small>
+                  Final total confirmed on WhatsApp. Opening chat does not place
+                  an order.
+                </small>
               )}
             </aside>
-            <div
-              className={`basket-order-dock${remaining > 0 ? " basket-order-dock--incomplete" : ""}`}
-            >
-              {remaining > 0 ? (
-                <Link className="solid-link" to="/">
-                  Add more items <ArrowRight size={18} />
-                </Link>
-              ) : (
-                <>
-                  <Button
-                    className="order-button"
-                    disabled={exceedsLimit}
-                    onClick={order}
-                  >
-                    Order on WhatsApp <ArrowRight data-icon="inline-end" />
-                  </Button>
-                  <small>
-                    Final total confirmed on WhatsApp. Opening chat does not
-                    place an order.
-                  </small>
-                </>
+            <div className="basket-order-dock">
+              <Button
+                className="order-button"
+                disabled={remaining > 0 || exceedsLimit}
+                onClick={order}
+              >
+                {orderButtonLabel}
+                {remaining === 0 && <ArrowRight data-icon="inline-end" />}
+              </Button>
+              {remaining === 0 && (
+                <small>
+                  Final total confirmed on WhatsApp. Opening chat does not place
+                  an order.
+                </small>
               )}
             </div>
           </div>

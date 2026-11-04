@@ -40,7 +40,7 @@ export const Header = ({
             }}
           >
             <Image
-              src="/logo.png"
+              src="/logo.webp"
               alt="Fresh Market"
               layout="constrained"
               width={132}
@@ -262,7 +262,7 @@ export const ProductCard = ({
 export const Footer = () => (
   <footer className="site-footer">
     <Image
-      src="/logo.png"
+      src="/logo.webp"
       alt="Fresh Market"
       layout="fixed"
       width={105}

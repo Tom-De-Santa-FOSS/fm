@@ -23,6 +23,37 @@ The typo fallback reads the indexed name/keyword vocabulary. This is appropriate
 
 Prices and availability belong to D1. Edit maintained products there rather than changing the development seed. `tools/seed-products.ts` provides local catalog data, including three separate chicken cuts. No AI model or API runs during search.
 
+### Manage products without redeploying
+
+An AI agent or a person with `cf` access can list, read, create, update, and delete products using `tools/products.py`. Install project dependencies and ImageMagick first, then authenticate with `cf auth login` (or supply `CLOUDFLARE_API_TOKEN`). The script uses `cf` for R2 uploads and D1 reads and writes. The site reads D1 on requests, so changes appear without a code deploy.
+
+```json
+{
+  "name": "Example produce",
+  "tag": "Vegetables",
+  "description": "Fresh produce, 1 kg.",
+  "price_rs": 150,
+  "unit": "kg",
+  "available": true,
+  "ai_keywords": "example",
+  "image": "./example.jpg"
+}
+```
+
+Save this as `product.json` next to the photo. Commands print JSON so agents can read the results:
+
+```bash
+python3 tools/products.py list
+python3 tools/products.py get 21
+python3 tools/products.py create product.json --dry-run
+python3 tools/products.py create product.json
+python3 tools/products.py update 21 changes.json --dry-run
+python3 tools/products.py update 21 changes.json
+python3 tools/products.py delete 21 --yes
+```
+
+`changes.json` contains only the fields to change, such as `{"price_rs": 90}` or `{"image": "./new-photo.jpg"}`. Create requires a name, category, description, price, unit, and either a photo or an existing catalog WebP `image_url`; `id` is optional. The script resizes uploaded images to at most 1200 px, encodes them as WebP, and uploads each under a new key before changing D1. It does not delete R2 objects when replacing a photo or deleting a product, because old URLs may still be in use. Delete is permanent in D1 and requires `--yes`. Add `--local` after a command to use local D1; photo uploads are rejected with `--local` because the image domain serves production R2. The local development seed may restore deleted seed products when the dev server starts. Supported categories are Chicken, Vegetables, Eggs, Bakery; units are kg, loaf, bunch, dozen, 250g, and 500g. The script requires an authenticated operator and is not a public API.
+
 ## Deployment
 
 `nitro.config.ts` selects the `cloudflare_module` preset and declares the existing account, Worker `fm`, custom domain `freshmarketpakistan.com`, and D1 database `fm-catalog` in APAC. Nitro generates `.output/server/wrangler.json`, including the Worker entry, static assets, compatibility settings, and module rules. There is no hand-written `cloudflare.config.ts` or Wrangler configuration file.
@@ -40,6 +71,8 @@ bun run deploy
 Wrangler deploys Nitro's generated output without rebuilding. Use `wrangler login` for local deployment and `cf auth login` for remote D1 operations; the CLIs do not share OAuth logins. CI uses `CLOUDFLARE_API_TOKEN` for both. Do not use `cf build`, `cf dev`, or `cf deploy` here: Nitro does not emit the Build Output format those commands require, and automatic setup would recreate the configuration this integration replaces.
 
 Remote migrations do not seed production. The initial deployment copied all 18 maintained PostgreSQL rows into D1 and checked every column against the source. Keep a separate export before future data migrations. Builds write `.output`; `bun run preview` serves the built app in the Workers runtime.
+
+Product images are served from the `freshmarket-images` R2 bucket at `images.freshmarketpakistan.com`. The zone Cache Rule `Fresh Market image cache` caches image extensions on that hostname for one day at the edge and in browsers. Use a new object key when replacing an image; old keys may remain in caches until their TTL expires. Check a repeated GET for `cf-cache-status: HIT` and `cache-control: max-age=86400`.
 
 ### GitHub Actions
 

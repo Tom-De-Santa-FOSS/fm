@@ -1,0 +1,14 @@
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/eggs.webp' WHERE id = 6 AND image_url = 'https://images.freshmarketpakistan.com/eggs.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/tomatoes.webp' WHERE id = 7 AND image_url = 'https://images.freshmarketpakistan.com/tomatoes.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/onions.webp' WHERE id = 8 AND image_url = 'https://images.freshmarketpakistan.com/onions.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/potatoes.webp' WHERE id = 9 AND image_url = 'https://images.freshmarketpakistan.com/potatoes.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/green-chillies.webp' WHERE id = 10 AND image_url = 'https://images.freshmarketpakistan.com/green-chillies.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/bread-dabalroti.webp' WHERE id = 11 AND image_url = 'https://images.freshmarketpakistan.com/bread-dabalroti.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/ginger-adrak-magnific.webp' WHERE id = 12 AND image_url = 'https://images.freshmarketpakistan.com/ginger-adrak-magnific.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/garlic-lehsan-producemarketguide.webp' WHERE id = 13 AND image_url = 'https://images.freshmarketpakistan.com/garlic-lehsan-producemarketguide.png';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/coriander-dhania-apnaugao.webp' WHERE id = 14 AND image_url = 'https://images.freshmarketpakistan.com/coriander-dhania-apnaugao.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/green-peas-mutter.webp' WHERE id = 15 AND image_url = 'https://images.freshmarketpakistan.com/green-peas-mutter.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/mint-podina-unsplash.webp' WHERE id = 16 AND image_url = 'https://images.freshmarketpakistan.com/mint-podina-unsplash.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/lemons-nimbu-woodstock.webp' WHERE id = 17 AND image_url = 'https://images.freshmarketpakistan.com/lemons-nimbu-woodstock.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/rusk-pape-floursandfrostings.webp' WHERE id = 18 AND image_url = 'https://images.freshmarketpakistan.com/rusk-pape-floursandfrostings.jpg';
+UPDATE products SET image_url = 'https://images.freshmarketpakistan.com/cucumber-kheera.webp' WHERE id = 21 AND image_url = 'https://images.freshmarketpakistan.com/cucumber-kheera.jpg';
