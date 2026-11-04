@@ -118,6 +118,16 @@ export const products: Omit<Product, "ai_keywords">[] = [
   },
   {
     available: true,
+    description: "Fresh cucumber (Kheera), 1 kg. Price may change daily.",
+    id: 21,
+    image_url: "https://images.freshmarketpakistan.com/cucumber-kheera.jpg",
+    name: "Cucumber (Kheera)",
+    price_rs: 80,
+    tag: "Vegetables",
+    unit: "kg",
+  },
+  {
+    available: true,
     description:
       "Fresh green chillies (Hari Mirch), 500 g. Price may change daily.",
     id: 10,

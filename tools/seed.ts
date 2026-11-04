@@ -18,6 +18,7 @@ const keywords = {
   19: "poultry murghi chicken karahi curry pieces",
   2: "poultry boneless chicken cubes tikka curry",
   20: "poultry murghi chicken biryani pieces",
+  21: "kheera khira cucumber vegetable salad",
   3: "poultry boneless breast fillet lean chicken",
   4: "poultry whole murghi roast chicken",
   5: "poultry chicken tikka chest breast",
