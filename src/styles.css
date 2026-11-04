@@ -289,12 +289,67 @@ img {
   bottom: 0;
   left: 0;
   display: flex;
-  align-items: center;
-  gap: 4px;
+  flex-direction: column;
   padding: 18px 8px 8px;
   background: linear-gradient(transparent, #0009);
 }
-.promotion-controls button {
+.promotion-seek {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  touch-action: none;
+  cursor: pointer;
+}
+.promotion-seek-track {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: #ffffff66;
+}
+.promotion-seek-buffer,
+.promotion-seek-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: inherit;
+}
+.promotion-seek-buffer {
+  width: var(--media-slider-buffer);
+  background: #ffffff66;
+}
+.promotion-seek-fill {
+  width: var(--media-slider-fill);
+  background: white;
+}
+.promotion-seek-thumb {
+  position: absolute;
+  left: var(--media-slider-fill);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  transform: translateX(-50%);
+}
+.promotion-seek[data-dragging] .promotion-seek-thumb {
+  left: var(--media-slider-pointer);
+}
+.promotion-seek[data-dragging] .promotion-seek-fill {
+  width: var(--media-slider-pointer);
+}
+.promotion-seek:focus-visible,
+.promotion-seek-thumb:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+.promotion-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.promotion-actions button {
   display: grid;
   place-items: center;
   width: 44px;
@@ -305,13 +360,13 @@ img {
   background: transparent;
   color: white;
 }
-.promotion-controls button:last-child {
+.promotion-actions button:last-child {
   margin-left: auto;
 }
-.promotion-controls button:focus-visible {
+.promotion-actions button:focus-visible {
   outline-color: white;
 }
-.promotion-controls button:active {
+.promotion-actions button:active {
   background: #ffffff30;
 }
 .promotion-player:fullscreen video {
