@@ -1,6 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
-import { ArrowRight, Plus, Search, ShoppingBag, Trash2, X } from "lucide-react";
+import {
+  ArrowRight,
+  Minus,
+  Plus,
+  Search,
+  ShoppingBag,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
 import { useCart } from "../lib/cart";
@@ -221,11 +229,13 @@ export const ProductCard = ({
   onChoose: (product: Product) => void;
 }) => {
   const variable = isVariableWeight(product);
-  const { lines, add, remove } = useCart();
+  const { lines, add, decrement } = useCart();
 
   const quantity = lines.find(
     (line) => line.product.id === product.id
   )?.quantity;
+
+  const atMinimum = quantity === productQuantityStep(product);
 
   return (
     <article className="product-card">
@@ -272,10 +282,18 @@ export const ProductCard = ({
         <div className="card-quantity">
           <button
             type="button"
-            aria-label={`Remove ${product.name} from basket`}
-            onClick={() => remove(product.id)}
+            aria-label={
+              atMinimum
+                ? `Remove ${product.name} from basket`
+                : `Decrease ${product.name} in basket`
+            }
+            onClick={() => decrement(product.id)}
           >
-            <Trash2 size={18} aria-hidden="true" />
+            {atMinimum ? (
+              <Trash2 size={18} aria-hidden="true" />
+            ) : (
+              <Minus size={18} aria-hidden="true" />
+            )}
           </button>
           <span>
             {productWeightGrams(product) === null

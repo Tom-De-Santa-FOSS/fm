@@ -1,6 +1,6 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
-import { Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { ArrowRight, CheckoutHeader, Header } from "../components/storefront";
@@ -8,9 +8,11 @@ import { Button } from "../components/ui/button";
 import { useCart } from "../lib/cart";
 import { formatMoney, formatQuantity } from "../lib/format";
 import {
+  isProductQuantity,
   isVariableWeight,
   minimumOrderRs,
   productLineTotal,
+  productQuantityStep,
 } from "../lib/products";
 import {
   WhatsAppOrderTooLongError,
@@ -19,7 +21,16 @@ import {
 } from "../lib/whatsapp";
 
 const CartPage = () => {
-  const { lines, count, countLabel, total, remove, exceedsLimit } = useCart();
+  const {
+    lines,
+    count,
+    countLabel,
+    total,
+    add,
+    decrement,
+    remove,
+    exceedsLimit,
+  } = useCart();
 
   const navigate = useNavigate();
   const [error, setError] = useState("");
@@ -116,15 +127,39 @@ const CartPage = () => {
                       >
                         {product.name}
                       </Link>
+                      <button
+                        className="basket-line-remove"
+                        type="button"
+                        aria-label={`Remove ${product.name} from basket`}
+                        onClick={() => remove(product.id)}
+                      >
+                        <Trash2 size={16} aria-hidden="true" />
+                        Remove
+                      </button>
                     </div>
                     <div className="line-quantity">
+                      <button
+                        type="button"
+                        aria-label={`Decrease ${product.name} in basket`}
+                        onClick={() => decrement(product.id)}
+                      >
+                        <Minus size={18} aria-hidden="true" />
+                      </button>
                       <span>{formatQuantity(product, quantity)}</span>
                       <button
                         type="button"
-                        aria-label={`Remove ${product.name}`}
-                        onClick={() => remove(product.id)}
+                        aria-label={`Add more ${product.name} to basket`}
+                        disabled={
+                          !isProductQuantity(
+                            product,
+                            quantity + productQuantityStep(product)
+                          )
+                        }
+                        onClick={() =>
+                          add(product, productQuantityStep(product))
+                        }
                       >
-                        <Trash2 size={18} />
+                        <Plus size={18} aria-hidden="true" />
                       </button>
                     </div>
                     <strong>

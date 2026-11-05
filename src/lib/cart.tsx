@@ -32,6 +32,7 @@ interface CartValue {
   total: number;
   exceedsLimit: boolean;
   add: (product: Product, quantity: number) => CartUpdate | null;
+  decrement: (productId: number) => void;
   remove: (productId: number) => void;
 }
 
@@ -233,6 +234,25 @@ export const CartProvider = ({
       },
       count,
       countLabel: `${count} ${count === 1 ? "item" : "items"}`,
+      decrement: (productId) => {
+        const line = linesRef.current.find(
+          (item) => item.product.id === productId
+        );
+
+        if (!line) {
+          return;
+        }
+
+        const quantity = line.quantity - productQuantityStep(line.product);
+
+        commit(
+          quantity > 0
+            ? linesRef.current.map((item) =>
+                item.product.id === productId ? { ...item, quantity } : item
+              )
+            : linesRef.current.filter((item) => item.product.id !== productId)
+        );
+      },
       exceedsLimit: lines.some(
         ({ product, quantity }) => !isProductQuantity(product, quantity)
       ),

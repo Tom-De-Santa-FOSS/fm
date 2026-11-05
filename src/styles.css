@@ -1173,6 +1173,23 @@ img {
 .basket-line-info > a {
   font-weight: 500;
 }
+.basket-line-remove {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  align-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--shop-green);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.basket-line-remove:focus-visible {
+  outline: 2px solid var(--shop-green);
+  outline-offset: 2px;
+}
 .basket-line > strong {
   grid-column: 4;
   grid-row: 1 / 3;
@@ -1745,6 +1762,10 @@ img {
   place-items: center;
   cursor: pointer;
 }
+.line-quantity button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
 .line-quantity span {
   flex: 1;
   min-width: 0;
@@ -1843,7 +1864,7 @@ img {
     grid-template-columns: 62px minmax(0, 1fr) auto;
     align-items: start;
     column-gap: 10px;
-    row-gap: 4px;
+    row-gap: 0;
     padding: 0 0 16px;
     margin-bottom: 0;
     border: 0;
@@ -1855,6 +1876,7 @@ img {
   .basket-line-info {
     grid-column: 2;
     grid-row: 1;
+    gap: 2px;
   }
   .basket-line-info > a {
     font-size: 13px;
@@ -1868,6 +1890,7 @@ img {
     grid-column: 2 / 4;
     grid-row: 2;
     align-self: start;
+    width: 136px;
   }
   .order-summary {
     padding: 18px;
