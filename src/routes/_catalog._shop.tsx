@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   Outlet,
   createFileRoute,
@@ -5,7 +6,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { AddToCartSheet } from "../components/add-to-cart-sheet";
 import { PromotionVideo } from "../components/promotion-video";
@@ -30,69 +31,68 @@ const SearchSummary = ({ count }: { count: number }) => (
   </div>
 );
 
+const ShopHeader = ({
+  basketCount,
+  category,
+  onSearchSubmit,
+  search,
+}: {
+  basketCount: number;
+  category: string;
+  onSearchSubmit: (value: string) => void;
+  search?: string;
+}) => {
+  const [draft, setDraft] = useState({ category, query: search ?? "", search });
+
+  if (draft.category !== category || draft.search !== search) {
+    setDraft({ category, query: search ?? "", search });
+  }
+
+  return (
+    <Header
+      basketCount={basketCount}
+      showBanner
+      search={draft.query}
+      onSearch={(query) => setDraft({ category, query, search })}
+      onSearchSubmit={onSearchSubmit}
+    />
+  );
+};
+
 const ShopLayout = () => {
-  const { category: selectedCategory } = useSearch({ from: "/_catalog/_shop" });
+  const { category: selectedCategory, search: submittedQuery } = useSearch({
+    from: "/_catalog/_shop",
+  });
+
   const { count } = useCart();
   const navigate = useNavigate({ from: "/" });
-  const [query, setQuery] = useState("");
-  const [submitted, setSubmitted] = useState({ query: "" });
   const products = useLoaderData({ from: "/_catalog" });
   const category = selectedCategory ?? "All groceries";
 
   const [chosen, setChosen] = useState<Product | null>(null);
 
-  const [results, setResults] = useState<{
-    key: string;
-    items: Product[];
-  } | null>(null);
-
-  const [searchError, setSearchError] = useState("");
-  const searchKey = `${selectedCategory ?? ""}:${submitted.query}`;
-
-  useEffect(() => {
-    if (!submitted.query) {
-      return;
-    }
-
-    let active = true;
-
-    void (async () => {
-      try {
-        const items = await findProducts({
-          data: { category: selectedCategory, query: submitted.query },
-        });
-
-        if (active) {
-          setResults({ items, key: searchKey });
-          setSearchError("");
-        }
-      } catch {
-        if (active) {
-          setSearchError(searchKey);
-        }
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [submitted, searchKey, selectedCategory]);
+  const search = useQuery({
+    enabled: Boolean(submittedQuery),
+    queryFn: () =>
+      findProducts({
+        data: { category: selectedCategory, query: submittedQuery ?? "" },
+      }),
+    queryKey: ["catalog-search", selectedCategory, submittedQuery],
+    retry: false,
+  });
 
   const setCategory = (name: string) =>
     navigate({
       resetScroll: false,
-      search: { category: name === "All groceries" ? undefined : name },
+      search: {
+        category: name === "All groceries" ? undefined : name,
+        search: submittedQuery === undefined ? undefined : "",
+      },
       to: "/",
     });
 
-  const visible = submitted.query
-    ? (results?.key === searchKey ? results.items : []).filter(
-        (product) =>
-          !selectedCategory ||
-          product.tag === selectedCategory ||
-          (selectedCategory === "Eggs & Bakery" &&
-            (product.tag === "Eggs" || product.tag === "Bakery"))
-      )
+  const visible = submittedQuery
+    ? (search.data ?? [])
     : products.filter(
         (product) =>
           !selectedCategory ||
@@ -101,12 +101,9 @@ const ShopLayout = () => {
             (product.tag === "Eggs" || product.tag === "Bakery"))
       );
 
-  const pending = Boolean(
-    submitted.query && results?.key !== searchKey && searchError !== searchKey
-  );
-
-  const searchComplete = !pending && searchError !== searchKey;
-  const browsing = category === "All groceries" && !submitted.query;
+  const pending = Boolean(submittedQuery && search.isPending);
+  const searchComplete = !pending && !search.isError;
+  const browsing = category === "All groceries" && !submittedQuery;
 
   const groups = browsing
     ? ([
@@ -122,28 +119,31 @@ const ShopLayout = () => {
           ),
         ],
       ] as const)
-    : [[submitted.query ? "Search results" : category, visible] as const];
+    : [[submittedQuery ? "Search results" : category, visible] as const];
 
   return (
     <div
       className={count ? "page shop-page shop-page--basket" : "page shop-page"}
     >
-      <Header
+      <ShopHeader
         basketCount={count}
-        showBanner
-        search={query}
-        onSearch={setQuery}
+        category={category}
         onSearchSubmit={(value) => {
-          setQuery(value);
-          setResults(null);
-          setSearchError("");
-          setSubmitted({ query: value.trim() });
+          void navigate({
+            resetScroll: false,
+            search: {
+              category: selectedCategory,
+              search: value.trim() || undefined,
+            },
+            to: "/",
+          });
         }}
+        search={submittedQuery}
       />
       <main className="shop-main">
-        {!submitted.query && <PromotionVideo />}
+        {submittedQuery === undefined && <PromotionVideo />}
         <CategoryNav category={category} onCategory={setCategory} />
-        {searchError === searchKey && (
+        {submittedQuery && search.isError && (
           <section className="no-results" role="alert">
             <h1>Search is unavailable</h1>
             <p>Try again in a moment.</p>
@@ -160,7 +160,7 @@ const ShopLayout = () => {
               <section className="catalog-section" key={title}>
                 <div className="section-heading">
                   <h1>{title}</h1>
-                  {submitted.query && (
+                  {submittedQuery && (
                     <output className="search-count" aria-live="polite">
                       {visible.length}{" "}
                       {visible.length === 1 ? "product" : "products"}
@@ -187,11 +187,9 @@ const ShopLayout = () => {
                 <Button
                   variant="secondary"
                   type="button"
-                  onClick={() => {
-                    setQuery("");
-                    setSubmitted({ query: "" });
-                    setCategory("All groceries");
-                  }}
+                  onClick={() =>
+                    navigate({ resetScroll: false, search: {}, to: "/" })
+                  }
                 >
                   Clear search and filters
                 </Button>
@@ -233,6 +231,12 @@ export const Route = createFileRoute("/_catalog/_shop")({
       "Eggs & Bakery",
     ].includes(String(search.category));
 
-    return category ? { category: String(search.category) } : {};
+    return {
+      ...(category && { category: String(search.category) }),
+      // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Validate unknown URL data at the route boundary.
+      ...(typeof search.search === "string" && {
+        search: search.search.trim().slice(0, 100),
+      }),
+    };
   },
 });

@@ -3,6 +3,7 @@ import {
   notFound,
   useLoaderData,
   useNavigate,
+  useSearch,
 } from "@tanstack/react-router";
 
 import { ProductSheet } from "../components/product-sheet";
@@ -11,7 +12,8 @@ import { getCatalogProduct } from "../lib/catalog";
 const ProductPage = () => {
   const product = useLoaderData({ from: "/_catalog/_shop/product/$id" });
   const navigate = useNavigate();
-  const close = () => navigate({ resetScroll: false, to: "/" });
+  const search = useSearch({ from: "/_catalog/_shop/product/$id" });
+  const close = () => navigate({ resetScroll: false, search, to: "/" });
 
   return <ProductSheet key={product.id} product={product} onClose={close} />;
 };

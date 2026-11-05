@@ -51,7 +51,6 @@ export const Header = ({
             search={{}}
             onClick={() => {
               onSearch?.("");
-              onSearchSubmit?.("");
             }}
           >
             <Image
@@ -238,12 +237,13 @@ export const ProductCard = ({
   const atMinimum = quantity === productQuantityStep(product);
 
   return (
-    <article className="product-card">
+    <article className="product-card" data-product-id={product.id}>
       <Link
         className="product-photo"
         aria-label={product.name}
         to="/product/$id"
         params={{ id: String(product.id) }}
+        search={(previous) => previous}
         resetScroll={false}
       >
         <Image
@@ -260,6 +260,7 @@ export const ProductCard = ({
           <Link
             to="/product/$id"
             params={{ id: String(product.id) }}
+            search={(previous) => previous}
             resetScroll={false}
           >
             {product.name}

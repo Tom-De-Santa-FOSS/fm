@@ -1,3 +1,4 @@
+import { Dialog } from "@base-ui/react/dialog";
 import { Drawer } from "@base-ui/react/drawer";
 import { Image } from "@unpic/react";
 import { X } from "lucide-react";
@@ -13,6 +14,7 @@ import {
 } from "../lib/products";
 import { AmountField } from "./amount-field";
 import { Button } from "./ui/button";
+import { useMobileSheet } from "./use-mobile-sheet";
 
 export const ProductSheet = ({
   product,
@@ -22,6 +24,8 @@ export const ProductSheet = ({
   onClose: () => void;
 }) => {
   const { add } = useCart();
+  const mobile = useMobileSheet();
+  const Overlay = mobile ? Drawer : Dialog;
   const [open, setOpen] = useState(true);
   const [amount, setAmount] = useState<number | null>(1);
   const [error, setError] = useState("");
@@ -45,7 +49,7 @@ export const ProductSheet = ({
   };
 
   return (
-    <Drawer.Root
+    <Overlay.Root
       open={open}
       onOpenChange={setOpen}
       onOpenChangeComplete={(isOpen) => {
@@ -54,18 +58,18 @@ export const ProductSheet = ({
         }
       }}
     >
-      <Drawer.Portal>
-        <Drawer.Backdrop className="sheet-backdrop" />
-        <Drawer.Viewport className="sheet-viewport">
-          <Drawer.Popup className="product-sheet">
+      <Overlay.Portal>
+        <Overlay.Backdrop className="sheet-backdrop" />
+        <Overlay.Viewport className="sheet-viewport">
+          <Overlay.Popup className="product-sheet">
             <div className="sheet-controls">
-              <div className="sheet-grabber" aria-hidden="true" />
-              <Drawer.Close
+              {mobile && <div className="sheet-grabber" aria-hidden="true" />}
+              <Overlay.Close
                 className="sheet-close"
                 aria-label="Close product details"
               >
                 <X size={20} />
-              </Drawer.Close>
+              </Overlay.Close>
             </div>
             <div className="sheet-scroll">
               <div className="sheet-photo">
@@ -79,7 +83,7 @@ export const ProductSheet = ({
                 />
               </div>
               <div className="sheet-content">
-                <Drawer.Title>{product.name}</Drawer.Title>
+                <Overlay.Title>{product.name}</Overlay.Title>
                 <p className="sheet-price">
                   <strong>{formatMoney(product.price_rs)}</strong> /{" "}
                   {product.unit}
@@ -113,9 +117,9 @@ export const ProductSheet = ({
                 </Button>
               </div>
             </div>
-          </Drawer.Popup>
-        </Drawer.Viewport>
-      </Drawer.Portal>
-    </Drawer.Root>
+          </Overlay.Popup>
+        </Overlay.Viewport>
+      </Overlay.Portal>
+    </Overlay.Root>
   );
 };
