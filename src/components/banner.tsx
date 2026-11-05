@@ -8,7 +8,6 @@ const announcements = [
   `Minimum Order ${formatMoney(minimumOrderRs)}`,
   "Prices Change Daily",
   "Free Delivery On 1st Order",
-  "Free Delivery On Orders Above 3000",
 ];
 
 export const Banner = () => {
