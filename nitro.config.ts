@@ -1,11 +1,13 @@
 import { defineConfig } from "nitro";
 
-export const databaseId = "24ce0783-4f73-42ae-a39b-05ebc0bffa55";
+import database from "./database.json";
+
+export const { databaseId } = database;
 
 export default defineConfig({
   cloudflare: {
     wrangler: {
-      account_id: "b39bde647194d2b90ddb769881e6add9",
+      account_id: database.accountId,
       d1_databases: [
         { binding: "DB", database_id: databaseId, database_name: "fm-catalog" },
       ],

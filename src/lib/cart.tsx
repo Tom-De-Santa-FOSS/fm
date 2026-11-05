@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 
 import {
   isProductQuantity,
+  minimumOrderRs,
   productLineTotal,
   productQuantityStep,
 } from "./products";
@@ -20,18 +21,14 @@ export interface CartLine {
   quantity: number;
 }
 
-export interface CartUpdate {
-  quantity: number;
-  total: number;
-}
-
 interface CartValue {
   lines: CartLine[];
   count: number;
   countLabel: string;
   total: number;
   exceedsLimit: boolean;
-  add: (product: Product, quantity: number) => CartUpdate | null;
+  canOrder: boolean;
+  add: (product: Product, quantity: number) => boolean;
   decrement: (productId: number) => void;
   remove: (productId: number) => void;
 }
@@ -202,14 +199,16 @@ export const CartProvider = ({
       linesRef.current = next;
       setLines(next);
       saveCart(next);
-
-      return cartTotals(next).total;
     };
+
+    const exceedsLimit = lines.some(
+      ({ product, quantity }) => !isProductQuantity(product, quantity)
+    );
 
     return {
       add: (product, amount) => {
         if (!isProductQuantity(product, amount)) {
-          return null;
+          return false;
         }
 
         const found = linesRef.current.find(
@@ -219,7 +218,7 @@ export const CartProvider = ({
         const quantity = (found?.quantity ?? 0) + amount;
 
         if (!isProductQuantity(product, quantity)) {
-          return null;
+          return false;
         }
 
         const line = { product, quantity };
@@ -230,8 +229,11 @@ export const CartProvider = ({
             )
           : [...linesRef.current, line];
 
-        return { quantity, total: commit(next) };
+        commit(next);
+
+        return true;
       },
+      canOrder: lines.length > 0 && total >= minimumOrderRs && !exceedsLimit,
       count,
       countLabel: `${count} ${count === 1 ? "item" : "items"}`,
       decrement: (productId) => {
@@ -253,9 +255,7 @@ export const CartProvider = ({
             : linesRef.current.filter((item) => item.product.id !== productId)
         );
       },
-      exceedsLimit: lines.some(
-        ({ product, quantity }) => !isProductQuantity(product, quantity)
-      ),
+      exceedsLimit,
       lines,
       remove: (productId) => {
         commit(

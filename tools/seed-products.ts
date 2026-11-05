@@ -1,7 +1,11 @@
 import type { Product } from "../src/lib/products";
 
+type SeedProduct = Omit<Product, "ai_keywords" | "selling_rule"> & {
+  selling_rule?: Product["selling_rule"];
+};
+
 /* oxlint-disable anti-slop/no-exported-constants -- Seed data is imported by the seed script. */
-export const products: Omit<Product, "ai_keywords">[] = [
+export const products: SeedProduct[] = [
   {
     available: true,
     description: "Simple cut chicken, 1 kg.",
@@ -64,6 +68,7 @@ export const products: Omit<Product, "ai_keywords">[] = [
     image_url: "https://images.freshmarketpakistan.com/chicken-whole.webp",
     name: "Whole Chicken",
     price_rs: 900,
+    selling_rule: "variable_weight",
     tag: "Chicken",
     unit: "kg",
   },
@@ -75,6 +80,7 @@ export const products: Omit<Product, "ai_keywords">[] = [
       "https://images.freshmarketpakistan.com/chicken-tikka-chest.webp",
     name: "Chicken Tikka Chest Cut",
     price_rs: 600,
+    selling_rule: "whole_kg_only",
     tag: "Chicken",
     unit: "kg",
   },

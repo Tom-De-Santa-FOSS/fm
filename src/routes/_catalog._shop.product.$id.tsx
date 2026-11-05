@@ -6,16 +6,32 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 
-import { ProductSheet } from "../components/product-sheet";
+import { AddToBasketSheet } from "../components/add-to-basket-sheet";
 import { getCatalogProduct } from "../lib/catalog";
 
 const ProductPage = () => {
   const product = useLoaderData({ from: "/_catalog/_shop/product/$id" });
   const navigate = useNavigate();
   const search = useSearch({ from: "/_catalog/_shop/product/$id" });
-  const close = () => navigate({ resetScroll: false, search, to: "/" });
 
-  return <ProductSheet key={product.id} product={product} onClose={close} />;
+  const close = () =>
+    navigate({
+      resetScroll: false,
+      search:
+        search.from === "cart"
+          ? {}
+          : { category: search.category, search: search.search },
+      to: search.from === "cart" ? "/cart" : "/",
+    });
+
+  return (
+    <AddToBasketSheet
+      key={product.id}
+      product={product}
+      onClose={close}
+      layout="detail"
+    />
+  );
 };
 
 export const Route = createFileRoute("/_catalog/_shop/product/$id")({
@@ -35,4 +51,7 @@ export const Route = createFileRoute("/_catalog/_shop/product/$id")({
 
     return product;
   },
+  validateSearch: (search) => ({
+    ...(search.from === "cart" && { from: "cart" as const }),
+  }),
 });

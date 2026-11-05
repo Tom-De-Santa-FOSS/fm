@@ -8,6 +8,7 @@ export interface Product {
   price_rs: number;
   unit: "kg" | "loaf" | "bunch" | "dozen" | "250g" | "500g";
   ai_keywords: string;
+  selling_rule: "standard" | "variable_weight" | "whole_kg_only";
 }
 
 export const minimumOrderRs = 1000;
@@ -15,8 +16,11 @@ export const minimumOrderRs = 1000;
 export const productQuantityLimit = (product: Product): number =>
   product.available ? 10 : 0;
 
-export const isVariableWeight = (product: Product) => product.id === 4;
-export const isWholeKgOnly = (product: Product) => product.id === 5;
+export const isVariableWeight = (product: Product) =>
+  product.selling_rule === "variable_weight";
+
+export const isWholeKgOnly = (product: Product) =>
+  product.selling_rule === "whole_kg_only";
 
 // Quantity remains a multiple of the catalog's priced unit, including in saved baskets.
 export const productWeightGrams = (product: Product): number | null => {

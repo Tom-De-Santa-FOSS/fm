@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { AddToCartSheet } from "../components/add-to-cart-sheet";
+import { AddToBasketSheet } from "../components/add-to-basket-sheet";
 import { PromotionVideo } from "../components/promotion-video";
 import {
   BasketDock,
@@ -20,14 +20,22 @@ import {
 import { Button } from "../components/ui/button";
 import { useCart } from "../lib/cart";
 import { findProducts } from "../lib/catalog";
+import {
+  catalogGroups,
+  categoryTags,
+  isBrowseCategory,
+} from "../lib/categories";
 import type { Product } from "../lib/products";
 
-const SearchSummary = ({ count }: { count: number }) => (
+interface ShopSearch {
+  category?: string;
+  search?: string;
+}
+
+const EmptySummary = ({ title }: { title: string }) => (
   <div className="search-summary">
-    <h1>Search results</h1>
-    <output aria-live="polite">
-      {count} {count === 1 ? "product" : "products"}
-    </output>
+    <h1>{title}</h1>
+    <output aria-live="polite">0 products</output>
   </div>
 );
 
@@ -86,7 +94,7 @@ const ShopLayout = () => {
       resetScroll: false,
       search: {
         category: name === "All groceries" ? undefined : name,
-        search: submittedQuery === undefined ? undefined : "",
+        search: undefined,
       },
       to: "/",
     });
@@ -96,9 +104,7 @@ const ShopLayout = () => {
     : products.filter(
         (product) =>
           !selectedCategory ||
-          product.tag === selectedCategory ||
-          (selectedCategory === "Eggs & Bakery" &&
-            (product.tag === "Eggs" || product.tag === "Bakery"))
+          categoryTags(selectedCategory).includes(product.tag)
       );
 
   const pending = Boolean(submittedQuery && search.isPending);
@@ -106,19 +112,17 @@ const ShopLayout = () => {
   const browsing = category === "All groceries" && !submittedQuery;
 
   const groups = browsing
-    ? ([
-        ["Chicken", products.filter((product) => product.tag === "Chicken")],
-        [
-          "Vegetables",
-          products.filter((product) => product.tag === "Vegetables"),
-        ],
-        [
-          "Eggs & Bakery",
-          products.filter(
-            (product) => product.tag === "Eggs" || product.tag === "Bakery"
-          ),
-        ],
-      ] as const)
+    ? catalogGroups
+        .map(
+          (name) =>
+            [
+              name,
+              products.filter((product) =>
+                categoryTags(name).includes(product.tag)
+              ),
+            ] as const
+        )
+        .filter(([, items]) => items.length)
     : [[submittedQuery ? "Search results" : category, visible] as const];
 
   return (
@@ -180,7 +184,9 @@ const ShopLayout = () => {
             ))
           ) : (
             <>
-              <SearchSummary count={0} />
+              <EmptySummary
+                title={submittedQuery ? "Search results" : category}
+              />
               <section className="search-empty" aria-live="polite">
                 <h2>No products found</h2>
                 <p>Try another search or browse all groceries.</p>
@@ -200,10 +206,11 @@ const ShopLayout = () => {
       <Footer />
       <BasketDock />
       {chosen && (
-        <AddToCartSheet
+        <AddToBasketSheet
           key={chosen.id}
           product={chosen}
           onClose={() => setChosen(null)}
+          layout="compact"
         />
       )}
       <Outlet />
@@ -222,21 +229,22 @@ export const Route = createFileRoute("/_catalog/_shop")({
       </main>
     </div>
   ),
-  validateSearch: (search) => {
-    const category = [
-      "Chicken",
-      "Vegetables",
-      "Eggs",
-      "Bakery",
-      "Eggs & Bakery",
-    ].includes(String(search.category));
+  validateSearch: (search): ShopSearch => {
+    const category =
+      isBrowseCategory(search.category) && search.category !== "All groceries"
+        ? search.category
+        : undefined;
+
+    /* oxlint-disable anti-slop/no-runtime-typeof -- Validate unknown URL data at the route boundary. */
+    const query =
+      typeof search.search === "string"
+        ? search.search.trim().slice(0, 100)
+        : "";
+    /* oxlint-enable anti-slop/no-runtime-typeof */
 
     return {
-      ...(category && { category: String(search.category) }),
-      // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Validate unknown URL data at the route boundary.
-      ...(typeof search.search === "string" && {
-        search: search.search.trim().slice(0, 100),
-      }),
+      category,
+      search: query || undefined,
     };
   },
 });

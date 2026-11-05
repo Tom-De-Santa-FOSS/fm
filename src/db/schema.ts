@@ -10,6 +10,9 @@ export const products = sqliteTable("products", {
   image_url: text().notNull(),
   name: text().notNull(),
   price_rs: integer().notNull(),
+  selling_rule: text({ enum: ["standard", "variable_weight", "whole_kg_only"] })
+    .notNull()
+    .default("standard"),
   tag: text().notNull(),
   unit: text().$type<Product["unit"]>().notNull(),
 });

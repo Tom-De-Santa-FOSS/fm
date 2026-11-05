@@ -8,10 +8,9 @@
   "scripts": {
     "dev": "just dev",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "cf d1 migrations apply 24ce0783-4f73-42ae-a39b-05ebc0bffa55 --dir drizzle/sqlite --local --persist-to .wrangler/state",
-    "db:migrate:remote": "CLOUDFLARE_ACCOUNT_ID=b39bde647194d2b90ddb769881e6add9 cf d1 migrations apply 24ce0783-4f73-42ae-a39b-05ebc0bffa55 --dir drizzle/sqlite",
+    "db:migrate": "bun tools/migrate.ts",
+    "db:migrate:remote": "bun tools/migrate.ts --remote",
     "db:seed": "bun tools/seed.ts",
-    "generate-routes": "vite build",
     "build": "vite build && wrangler types --config .output/server/wrangler.json worker-configuration.d.ts",
     "preview": "wrangler dev --config .output/server/wrangler.json --persist-to .wrangler/state",
     "deploy": "wrangler deploy --config .output/server/wrangler.json",

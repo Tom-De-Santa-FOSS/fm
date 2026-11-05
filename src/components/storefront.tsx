@@ -12,6 +12,7 @@ import {
 import { useLayoutEffect, useRef } from "react";
 
 import { useCart } from "../lib/cart";
+import { browseCategories } from "../lib/categories";
 import { formatMoney, formatQuantity } from "../lib/format";
 import type { Product } from "../lib/products";
 import {
@@ -20,6 +21,7 @@ import {
   productQuantityStep,
   productWeightGrams,
 } from "../lib/products";
+import { whatsappNumber, whatsappPhoneNumber } from "../lib/whatsapp";
 import { Banner } from "./banner";
 import { Button } from "./ui/button";
 
@@ -153,8 +155,8 @@ export const CategoryNav = ({
   category,
   onCategory,
 }: {
-  category?: string;
-  onCategory?: (value: string) => void;
+  category: string;
+  onCategory: (value: string) => void;
 }) => {
   const nav = useRef<HTMLElement>(null);
 
@@ -183,7 +185,7 @@ export const CategoryNav = ({
     const observer = new ResizeObserver(update);
     observer.observe(list);
 
-    for (const tab of list.querySelectorAll("button, a")) {
+    for (const tab of list.querySelectorAll("button")) {
       observer.observe(tab);
     }
 
@@ -197,24 +199,17 @@ export const CategoryNav = ({
 
   return (
     <nav ref={nav} className="category-nav" aria-label="Product categories">
-      {["All groceries", "Chicken", "Vegetables", "Eggs", "Bakery"].map(
-        (name) =>
-          onCategory ? (
-            <button
-              key={name}
-              type="button"
-              aria-current={category === name ? "page" : undefined}
-              onClick={() => onCategory(name)}
-            >
-              {name}
-            </button>
-          ) : (
-            <Link key={name} to="/" search={{ category: name }}>
-              {name}
-            </Link>
-          )
-      )}
-      {onCategory && <div className="category-indicator" aria-hidden="true" />}
+      {browseCategories.map((name) => (
+        <button
+          key={name}
+          type="button"
+          aria-current={category === name ? "page" : undefined}
+          onClick={() => onCategory(name)}
+        >
+          {name}
+        </button>
+      ))}
+      <div className="category-indicator" aria-hidden="true" />
       <span>Sukkur</span>
     </nav>
   );
@@ -332,8 +327,8 @@ export const Footer = () => (
     />
     <div>
       <Link to="/delivery">Delivery</Link>
-      <a href="https://wa.me/923337125030">WhatsApp</a>
-      <a href="tel:+923337125030">+92 333 7125030</a>
+      <a href={`https://wa.me/${whatsappNumber}`}>WhatsApp</a>
+      <a href={`tel:+${whatsappNumber}`}>{whatsappPhoneNumber}</a>
     </div>
   </footer>
 );

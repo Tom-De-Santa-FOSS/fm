@@ -1,7 +1,8 @@
 import { env } from "cloudflare:workers";
-import { and, asc, eq, getTableColumns, sql } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 
+import { categoryTags } from "../lib/categories";
 import type { Product } from "../lib/products";
 import { products } from "./schema";
 
@@ -20,7 +21,6 @@ export const getProduct = async (id: number): Promise<Product | undefined> => {
   return rows[0];
 };
 
-// One insertion, deletion, substitution, or adjacent transposition.
 const isTypo = (word: string, term: string) => {
   if (Math.abs(word.length - term.length) > 1) {
     return false;
@@ -55,10 +55,11 @@ const isTypo = (word: string, term: string) => {
 export const searchProducts = async (query: string, category?: string) => {
   const db = database();
   const term = query.trim().slice(0, 100);
-  let filter = category ? eq(products.tag, category) : undefined;
+  const tags = category ? categoryTags(category) : [];
+  let filter = tags.length ? eq(products.tag, tags[0]) : undefined;
 
-  if (category === "Eggs & Bakery") {
-    filter = sql`${products.tag} IN ('Eggs', 'Bakery')`;
+  if (tags.length > 1) {
+    filter = inArray(products.tag, [...tags]);
   }
 
   if (!term) {

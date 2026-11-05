@@ -12,12 +12,16 @@ import tempfile
 from uuid import uuid4
 
 
-DATABASE = "24ce0783-4f73-42ae-a39b-05ebc0bffa55"
-ACCOUNT = "b39bde647194d2b90ddb769881e6add9"
+ROOT = Path(__file__).resolve().parents[1]
+DATABASE_CONFIG = json.loads((ROOT / "database.json").read_text())
+DATABASE = DATABASE_CONFIG["databaseId"]
+ACCOUNT = DATABASE_CONFIG["accountId"]
 BUCKET = "freshmarket-images"
 IMAGE_HOST = "https://images.freshmarketpakistan.com/"
 UNITS = {"kg", "loaf", "bunch", "dozen", "250g", "500g"}
-CATEGORIES = {"Chicken", "Vegetables", "Eggs", "Bakery"}
+CATEGORIES = set(
+    json.loads((ROOT / "src/lib/product-categories.json").read_text())
+)
 
 
 def run(*args):
@@ -25,12 +29,14 @@ def run(*args):
     return result.stdout
 
 
-FIELDS = ("name", "tag", "description", "image_url", "price_rs", "unit", "available", "ai_keywords")
+FIELDS = ("name", "tag", "description", "image_url", "price_rs", "unit", "available", "ai_keywords", "selling_rule")
+BOOLEAN_FIELDS = {"available"}
+SELLING_RULES = {"standard", "variable_weight", "whole_kg_only"}
 SELECT = "id, " + ", ".join(FIELDS)
 
 
 def placeholder(field):
-    return "CAST(? AS INTEGER)" if field in ("id", "price_rs", "available") else "?"
+    return "CAST(? AS INTEGER)" if field in ("id", "price_rs") or field in BOOLEAN_FIELDS else "?"
 
 
 def query(cf, sql, params=(), local=False):
@@ -45,6 +51,13 @@ def query(cf, sql, params=(), local=False):
         raise ValueError(f"D1 query failed: {results}")
     table = results[0]["results"]
     return [dict(zip(table["columns"], row, strict=True)) for row in table["rows"]]
+
+
+def as_product(row):
+    return {
+        field: bool(value) if field in BOOLEAN_FIELDS else value
+        for field, value in row.items()
+    }
 
 
 def product_data(data, creating):
@@ -79,8 +92,13 @@ def product_data(data, creating):
         type(data["price_rs"]) is not int or not 0 < data["price_rs"] <= 1_000_000
     ):
         raise ValueError("price_rs must be a positive whole number")
-    if "available" in data and type(data["available"]) is not bool:
-        raise ValueError("available must be true or false")
+    for field in BOOLEAN_FIELDS & data.keys():
+        if type(data[field]) is not bool:
+            raise ValueError(f"{field} must be true or false")
+    if "selling_rule" in data and (
+        not isinstance(data["selling_rule"], str) or data["selling_rule"] not in SELLING_RULES
+    ):
+        raise ValueError("Unsupported selling rule")
     if "ai_keywords" in data and (
         not isinstance(data["ai_keywords"], str) or len(data["ai_keywords"]) > 500
     ):
@@ -119,11 +137,13 @@ def main():
     cf = str(Path(__file__).resolve().parents[1] / "node_modules/.bin/cf")
     if not Path(cf).is_file():
         raise ValueError("Install project dependencies before managing products")
-    os.environ.setdefault("CLOUDFLARE_ACCOUNT_ID", ACCOUNT)
+    if os.environ.get("CLOUDFLARE_ACCOUNT_ID", ACCOUNT) != ACCOUNT:
+        raise ValueError("CLOUDFLARE_ACCOUNT_ID differs from database.json")
+    os.environ["CLOUDFLARE_ACCOUNT_ID"] = ACCOUNT
 
     if args.command == "list":
         rows = query(cf, f"SELECT {SELECT} FROM products ORDER BY id", local=args.local)
-        print(json.dumps([{**row, "available": bool(row["available"])} for row in rows]))
+        print(json.dumps([as_product(row) for row in rows]))
         return
 
     old = None
@@ -135,7 +155,7 @@ def main():
             raise ValueError(f"Product {args.id} does not exist")
         old = rows[0]
     if args.command == "get":
-        print(json.dumps({**old, "available": bool(old["available"])}))
+        print(json.dumps(as_product(old)))
         return
     if args.command == "delete":
         if not args.yes:
@@ -147,6 +167,9 @@ def main():
         return
 
     data = product_data(json.loads(args.product.read_text()), args.command == "create")
+    selling_rules = {**(old or {}), **data}
+    if selling_rules.get("selling_rule", "standard") != "standard" and selling_rules["unit"] != "kg":
+        raise ValueError("Weight-based selling rules require a kg unit")
     image = (args.product.parent / data["image"]).resolve() if data.get("image") else None
     if args.local and image:
         raise ValueError("Photo uploads require production D1; --local cannot publish images")
@@ -180,8 +203,9 @@ def main():
     if args.command == "create":
         values.setdefault("available", True)
         values.setdefault("ai_keywords", "")
+        values.setdefault("selling_rule", "standard")
     values = {
-        field: int(value) if field == "available" else value
+        field: int(value) if field in BOOLEAN_FIELDS else value
         for field, value in values.items()
     }
     columns = (["id"] if "id" in data else []) + list(values)
@@ -197,7 +221,7 @@ def main():
     rows = query(cf, sql, parameters, args.local)
     if not rows:
         raise ValueError("Product changed before the write completed")
-    print(json.dumps({**rows[0], "available": bool(rows[0]["available"])}))
+    print(json.dumps(as_product(rows[0])))
 
 
 if __name__ == "__main__":

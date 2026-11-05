@@ -16,15 +16,13 @@ const presets = [250, 500, 1000];
 export const WeightSelector = ({
   product,
   grams,
-  initialQuantity,
   onValueChange,
 }: {
   product: Product;
   grams: number;
-  initialQuantity: number;
   onValueChange: (quantity: number) => void;
 }) => {
-  const initialWeight = initialQuantity * grams;
+  const initialWeight = grams;
 
   const [selectedWeight, setSelectedWeight] = useState(
     presets.includes(initialWeight) ? String(initialWeight) : "custom"

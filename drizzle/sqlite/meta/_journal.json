@@ -29,6 +29,62 @@
       "when": 1793733812522,
       "tag": "0003_whole_chicken_price",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1793733812523,
+      "tag": "0004_boneless_cubes_image",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1793733812524,
+      "tag": "0005_boneless_breast_image",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1793733812525,
+      "tag": "0006_whole_chicken_image",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1793733812526,
+      "tag": "0007_chicken_cuts_images",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793733812527,
+      "tag": "0008_cucumber_kheera",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1793733812528,
+      "tag": "0009_chicken_webp",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1793733812529,
+      "tag": "0010_catalog_webp",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1793908304461,
+      "tag": "0011_product_selling_rules",
+      "breakpoints": true
     }
   ]
 }

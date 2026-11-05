@@ -3,14 +3,17 @@ import { useState } from "react";
 
 import { CheckoutHeader, Header } from "../components/storefront";
 import { useCart } from "../lib/cart";
-import { minimumOrderRs } from "../lib/products";
-import { whatsappOrderText, whatsappOrderUrl } from "../lib/whatsapp";
+import {
+  WhatsAppOrderTooLongError,
+  whatsappOrderText,
+  whatsappOrderUrl,
+} from "../lib/whatsapp";
 
 const HandoffPage = () => {
-  const { lines, count, total, exceedsLimit } = useCart();
+  const { lines, count, total, exceedsLimit, canOrder } = useCart();
   const [copied, setCopied] = useState(false);
 
-  if (!lines.length || total < minimumOrderRs || exceedsLimit) {
+  if (!canOrder) {
     return (
       <div className="page checkout-page">
         <Header basketCount={count} />
@@ -37,8 +40,10 @@ const HandoffPage = () => {
 
   try {
     url = whatsappOrderUrl(lines, total);
-  } catch {
-    // The order text remains available to copy if the URL exceeds its limit.
+  } catch (error) {
+    if (!(error instanceof WhatsAppOrderTooLongError)) {
+      throw error;
+    }
   }
 
   return (

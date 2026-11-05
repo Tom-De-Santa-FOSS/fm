@@ -16,6 +16,7 @@ import {
 } from "../lib/products";
 import {
   WhatsAppOrderTooLongError,
+  whatsappNumber,
   whatsappOrderUrl,
   whatsappPhoneNumber,
 } from "../lib/whatsapp";
@@ -30,6 +31,7 @@ const CartPage = () => {
     decrement,
     remove,
     exceedsLimit,
+    canOrder,
   } = useCart();
 
   const navigate = useNavigate();
@@ -42,7 +44,7 @@ const CartPage = () => {
   const variable = lines.some(({ product }) => isVariableWeight(product));
 
   const order = () => {
-    if (!lines.length || remaining || exceedsLimit) {
+    if (!canOrder) {
       return;
     }
 
@@ -51,10 +53,14 @@ const CartPage = () => {
     try {
       url = whatsappOrderUrl(lines, total);
     } catch (error_) {
+      if (error_ instanceof WhatsAppOrderTooLongError) {
+        void navigate({ to: "/handoff" });
+
+        return;
+      }
+
       setError(
-        error_ instanceof WhatsAppOrderTooLongError
-          ? "This basket is too large for one WhatsApp message. Remove some items or call us instead. Your basket is still here."
-          : "Couldn't open WhatsApp. Try again or call us instead. Your basket is still here."
+        "Couldn't open WhatsApp. Try again or call us instead. Your basket is still here."
       );
 
       return;
@@ -109,6 +115,7 @@ const CartPage = () => {
                       aria-label={product.name}
                       to="/product/$id"
                       params={{ id: String(product.id) }}
+                      search={{ from: "cart" }}
                     >
                       <Image
                         src={product.image_url}
@@ -124,6 +131,7 @@ const CartPage = () => {
                       <Link
                         to="/product/$id"
                         params={{ id: String(product.id) }}
+                        search={{ from: "cart" }}
                       >
                         {product.name}
                       </Link>
@@ -182,8 +190,8 @@ const CartPage = () => {
               </div>
               {variable && (
                 <p>
-                  Whole chickens use a 1 kg estimate each. We will confirm the
-                  final weight and price in chat.
+                  Variable-weight items use a 1 kg estimate each. We will
+                  confirm the final weight and price in chat.
                 </p>
               )}
               {remaining > 0 && (
@@ -200,7 +208,9 @@ const CartPage = () => {
               {error && (
                 <p className="order-error" role="alert">
                   {error}{" "}
-                  <a href="tel:+923337125030">Call {whatsappPhoneNumber}</a>
+                  <a href={`tel:+${whatsappNumber}`}>
+                    Call {whatsappPhoneNumber}
+                  </a>
                 </p>
               )}
               <Button

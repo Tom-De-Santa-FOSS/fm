@@ -14,7 +14,7 @@ export const formatQuantity = (product: Product, quantity: number) => {
   }
 
   if (isVariableWeight(product)) {
-    return `${quantity} chicken${quantity === 1 ? "" : "s"}`;
+    return `${quantity} item${quantity === 1 ? "" : "s"}`;
   }
 
   return `${quantity} ${product.unit}`;

@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import { isBrowseCategory } from "./categories";
+
 export const getCatalog = createServerFn().handler(async () => {
   const { listProducts } = await import("../db/catalog.server");
 
@@ -21,18 +23,20 @@ export const getCatalogProduct = createServerFn()
   });
 
 export const findProducts = createServerFn()
-  .validator((input: { query: string; category?: string }) => ({
-    category: [
-      "Chicken",
-      "Vegetables",
-      "Eggs",
-      "Bakery",
-      "Eggs & Bakery",
-    ].includes(input.category ?? "")
-      ? input.category
-      : undefined,
-    query: input.query.slice(0, 100),
-  }))
+  .validator((input: { query: string; category?: string }) => {
+    // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Validate untrusted server-function input before searching.
+    if (!input || typeof input.query !== "string") {
+      throw new Error("Invalid search query");
+    }
+
+    return {
+      category:
+        isBrowseCategory(input.category) && input.category !== "All groceries"
+          ? input.category
+          : undefined,
+      query: input.query.trim().slice(0, 100),
+    };
+  })
   .handler(async ({ data }) => {
     const { searchProducts } = await import("../db/catalog.server");
 
