@@ -1,8 +1,7 @@
 import { env } from "cloudflare:workers";
-import { and, asc, eq, getTableColumns, inArray, sql } from "drizzle-orm";
+import { asc, eq, getTableColumns, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 
-import { categoryTags } from "../lib/categories";
 import type { Product } from "../lib/products";
 import { products } from "./schema";
 
@@ -52,18 +51,12 @@ const isTypo = (word: string, term: string) => {
   );
 };
 
-export const searchProducts = async (query: string, category?: string) => {
+export const searchProducts = async (query: string) => {
   const db = database();
   const term = query.trim().slice(0, 100);
-  const tags = category ? categoryTags(category) : [];
-  let filter = tags.length ? eq(products.tag, tags[0]) : undefined;
-
-  if (tags.length > 1) {
-    filter = inArray(products.tag, [...tags]);
-  }
 
   if (!term) {
-    return db.select().from(products).where(filter).orderBy(asc(products.id));
+    return db.select().from(products).orderBy(asc(products.id));
   }
 
   // Tokenize user input rather than accepting FTS operators or query syntax.
@@ -78,7 +71,7 @@ export const searchProducts = async (query: string, category?: string) => {
       .select(getTableColumns(products))
       .from(products)
       .innerJoin(sql`products_fts`, sql`products_fts.rowid = ${products.id}`)
-      .where(and(filter, sql`products_fts MATCH ${match}`))
+      .where(sql`products_fts MATCH ${match}`)
       .orderBy(sql`bm25(products_fts, 4, 2, 1, 1)`, asc(products.id))
       .limit(60);
 

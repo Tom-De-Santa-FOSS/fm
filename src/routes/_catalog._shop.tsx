@@ -83,9 +83,9 @@ const ShopLayout = () => {
     enabled: Boolean(submittedQuery),
     queryFn: () =>
       findProducts({
-        data: { category: selectedCategory, query: submittedQuery ?? "" },
+        data: submittedQuery ?? "",
       }),
-    queryKey: ["catalog-search", selectedCategory, submittedQuery],
+    queryKey: ["catalog-search", submittedQuery],
     retry: false,
   });
 
@@ -136,7 +136,7 @@ const ShopLayout = () => {
           void navigate({
             resetScroll: false,
             search: {
-              category: selectedCategory,
+              category: undefined,
               search: value.trim() || undefined,
             },
             to: "/",
@@ -146,7 +146,9 @@ const ShopLayout = () => {
       />
       <main className="shop-main">
         {submittedQuery === undefined && <PromotionVideo />}
-        <CategoryNav category={category} onCategory={setCategory} />
+        {!submittedQuery && (
+          <CategoryNav category={category} onCategory={setCategory} />
+        )}
         {submittedQuery && search.isError && (
           <section className="no-results" role="alert">
             <h1>Search is unavailable</h1>
@@ -230,11 +232,6 @@ export const Route = createFileRoute("/_catalog/_shop")({
     </div>
   ),
   validateSearch: (search): ShopSearch => {
-    const category =
-      isBrowseCategory(search.category) && search.category !== "All groceries"
-        ? search.category
-        : undefined;
-
     /* oxlint-disable anti-slop/no-runtime-typeof -- Validate unknown URL data at the route boundary. */
     const query =
       typeof search.search === "string"
@@ -243,7 +240,12 @@ export const Route = createFileRoute("/_catalog/_shop")({
     /* oxlint-enable anti-slop/no-runtime-typeof */
 
     return {
-      category,
+      category:
+        !query &&
+        isBrowseCategory(search.category) &&
+        search.category !== "All groceries"
+          ? search.category
+          : undefined,
       search: query || undefined,
     };
   },
