@@ -1,17 +1,11 @@
-import productCategories from "./product-categories.json";
-
-export const browseCategories = [
-  "All groceries",
-  ...productCategories,
-  "Eggs & Bakery",
-] as const;
-
 export const catalogGroups = [
-  "Chicken",
   "Vegetables",
   "Eggs & Bakery",
   "Pantry",
+  "Chicken",
 ] as const;
+
+export const browseCategories = ["All groceries", ...catalogGroups] as const;
 
 export const isBrowseCategory = (
   value: unknown
