@@ -17,15 +17,15 @@ The previous Cloudflare Vite plugin kept local data in `.cloudflare/state`. That
 
 `src/db/schema.ts` defines the SQLite product table. Generate schema changes with `bun run db:generate`; migrations in `drizzle/sqlite` run through `cf d1 migrations apply`, locally or remotely. The old PostgreSQL migrations in `drizzle/` and `compose.yaml` are retained only for access to the previous database. Do not apply those migrations to SQLite or delete the old Docker volume until you no longer need the backup.
 
-The SQLite migration journal includes the hand-written migrations through `0011` so Drizzle Kit generates the next unused number. Applied SQL must not be edited. `database.json` supplies the D1 database and account IDs to Nitro, migration scripts, and the catalog management tool.
+The SQLite migration journal includes the hand-written migrations through `0012` so Drizzle Kit generates the next unused number. Applied SQL must not be edited. `database.json` supplies the D1 database and account IDs to Nitro, migration scripts, and the catalog management tool.
 
-FTS5 indexes product names, categories, descriptions, and curated `ai_keywords`, with weights of 4, 2, 1, and 1 respectively. Triggers keep the index current after inserts, updates, and deletes. Exact matches run first; only when no results match does search try prefixes and one-character typos (including adjacent transpositions) in names and keywords. Words shorter than four characters do not allow typos. Results are limited to 60 and retain category filtering. SQL and FTS operators in user input are not executed.
+FTS5 indexes product names, tags, descriptions, and curated `ai_keywords`, with weights of 4, 2, 1, and 1 respectively. Triggers keep the index current after inserts, updates, and deletes. Exact matches run first; only when no results match does search try prefixes and one-character typos (including adjacent transpositions) in names and keywords. Words shorter than four characters do not allow typos. Results are limited to 60. SQL and FTS operators in user input are not executed.
 
 The typo fallback reads the indexed name/keyword vocabulary. This is appropriate for the current small catalog; revisit vocabulary expansion if the catalog grows enough for those reads to affect D1 usage. Search ranking is SQLite BM25, not ParadeDB, so ordering can differ.
 
 Prices and availability belong to D1. Edit maintained products there rather than changing the development seed. `tools/seed-products.ts` provides local catalog data, including three separate chicken cuts. No AI model or API runs during search.
 
-The `selling_rule` product field controls quantity and price presentation: `standard` by default, `variable_weight`, or `whole_kg_only`. Migration `0011` sets rules on existing whole chicken (#4) and chest-cut (#5) rows only when their names, categories, and units still match the known catalog. Check production rows before deploying: if either product was renamed, set its selling rule explicitly after the migration. Reused IDs retain the standard rule. The operator requires a kg unit for either nonstandard rule. `src/lib/product-categories.json` defines the five maintained category tags used by the storefront and operator tool; the storefront also combines Eggs and Bakery into one browsing group.
+The `selling_rule` product field controls quantity and price presentation: `standard` by default, `variable_weight`, or `whole_kg_only`. Migration `0011` sets rules on existing whole chicken (#4) and chest-cut (#5) rows only when their names, tags, and units still match the known catalog. Check production rows before deploying: if either product was renamed, set its selling rule explicitly after the migration. Reused IDs retain the standard rule. The operator requires a kg unit for either nonstandard rule. Migration `0012` stores tags in D1, preserves any existing product tags, and links every product to a tag. Renaming a tag updates its products; deleting one with products is blocked.
 
 ### Manage products without redeploying
 
@@ -55,9 +55,13 @@ python3 tools/products.py create product.json
 python3 tools/products.py update 21 changes.json --dry-run
 python3 tools/products.py update 21 changes.json
 python3 tools/products.py delete 21 --yes
+python3 tools/products.py tags list
+python3 tools/products.py tags create "Fresh fruit"
+python3 tools/products.py tags update "Fresh fruit" "Fruit"
+python3 tools/products.py tags delete "Fruit" --yes
 ```
 
-`changes.json` contains only the fields to change, such as `{"price_rs": 90}` or `{"image": "./new-photo.jpg"}`. Create requires a name, category, description, price, unit, and either a photo or an existing catalog WebP `image_url`; `id` is optional. The script resizes uploaded images to at most 1200 px, encodes them as WebP, and uploads each under a new key before changing D1. It does not delete R2 objects when replacing a photo or deleting a product, because old URLs may still be in use. Delete is permanent in D1 and requires `--yes`. Add `--local` after a command to use local D1; photo uploads are rejected with `--local` because the image domain serves production R2. The local development seed may restore deleted seed products when the dev server starts. Supported categories are Chicken, Vegetables, Eggs, Bakery, Pantry; units are kg, loaf, bunch, dozen, 250g, and 500g. The script requires an authenticated operator and is not a public API.
+`changes.json` contains only the fields to change, such as `{"price_rs": 90}` or `{"image": "./new-photo.jpg"}`. Create requires a name, existing tag, description, price, unit, and either a photo or an existing catalog WebP `image_url`; `id` is optional. The script resizes uploaded images to at most 1200 px, encodes them as WebP, and uploads each under a new key before changing D1. It does not delete R2 objects when replacing a photo or deleting a product, because old URLs may still be in use. Delete is permanent in D1 and requires `--yes`. Add `--local` after the command (`tags --local list` for tags) to use local D1; photo uploads are rejected with `--local` because the image domain serves production R2. The local development seed may restore deleted seed products when the dev server starts, unless their tag has been deleted. Tags can be added, renamed, or deleted without a deploy; rename updates assigned products, while deletion requires reassigning products first. Units are kg, loaf, bunch, dozen, 250g, and 500g. The script requires an authenticated operator and is not a public API.
 
 ## Deployment
 

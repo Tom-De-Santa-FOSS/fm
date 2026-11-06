@@ -12,7 +12,6 @@ import {
 import { useLayoutEffect, useRef } from "react";
 
 import { useCart } from "../lib/cart";
-import { browseCategories } from "../lib/categories";
 import { formatMoney, formatQuantity } from "../lib/format";
 import type { Product } from "../lib/products";
 import {
@@ -24,6 +23,7 @@ import {
 import { whatsappNumber, whatsappPhoneNumber } from "../lib/whatsapp";
 import { Banner } from "./banner";
 import { Button } from "./ui/button";
+import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 
 export const Header = ({
   basketCount,
@@ -151,29 +151,25 @@ export const CheckoutHeader = ({
   </header>
 );
 
-export const CategoryNav = ({
-  category,
-  onCategory,
+export const TagNav = ({
+  tag,
+  tags,
+  onTag,
 }: {
-  category: string;
-  onCategory: (value: string) => void;
+  tag?: string;
+  tags: string[];
+  onTag: (value?: string) => void;
 }) => {
-  const nav = useRef<HTMLElement>(null);
+  const nav = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const list = nav.current;
-    const active = list?.querySelector<HTMLElement>('[aria-current="page"]');
 
     if (!list) {
       return;
     }
 
     const update = () => {
-      if (category && active) {
-        list.style.setProperty("--active-tab-left", `${active.offsetLeft}px`);
-        list.style.setProperty("--active-tab-width", `${active.offsetWidth}px`);
-      }
-
       list.toggleAttribute("data-overflow-start", list.scrollLeft > 1);
       list.toggleAttribute(
         "data-overflow-end",
@@ -195,23 +191,30 @@ export const CategoryNav = ({
       observer.disconnect();
       list.removeEventListener("scroll", update);
     };
-  }, [category]);
+  }, []);
 
   return (
-    <nav ref={nav} className="category-nav" aria-label="Product categories">
-      {browseCategories.map((name) => (
-        <button
-          key={name}
-          type="button"
-          aria-current={category === name ? "page" : undefined}
-          onClick={() => onCategory(name)}
-        >
-          {name}
-        </button>
-      ))}
-      <div className="category-indicator" aria-hidden="true" />
-      <span>Sukkur</span>
-    </nav>
+    <Tabs
+      className="tag-tabs"
+      render={<nav aria-label="Product tags" />}
+      value={tag ?? ""}
+      onValueChange={(value) => onTag(value === "" ? undefined : String(value))}
+    >
+      <TabsList
+        ref={nav}
+        className="tag-nav"
+        variant="line"
+        aria-label="Product tags"
+      >
+        <TabsTrigger value="">All groceries</TabsTrigger>
+        {tags.map((name) => (
+          <TabsTrigger key={name} value={name}>
+            {name}
+          </TabsTrigger>
+        ))}
+        <span className="tag-location">Sukkur</span>
+      </TabsList>
+    </Tabs>
   );
 };
 

@@ -19,9 +19,6 @@ ACCOUNT = DATABASE_CONFIG["accountId"]
 BUCKET = "freshmarket-images"
 IMAGE_HOST = "https://images.freshmarketpakistan.com/"
 UNITS = {"kg", "loaf", "bunch", "dozen", "250g", "500g"}
-CATEGORIES = set(
-    json.loads((ROOT / "src/lib/product-categories.json").read_text())
-)
 
 
 def run(*args):
@@ -84,10 +81,10 @@ def product_data(data, creating):
             data[field] = data[field].strip()
     if len(data.get("name", "")) > 120 or len(data.get("description", "")) > 1000:
         raise ValueError("Name or description is too long")
-    if ("tag" in data and data["tag"] not in CATEGORIES) or (
-        "unit" in data and data["unit"] not in UNITS
-    ):
-        raise ValueError("Unsupported category or unit")
+    if len(data.get("tag", "")) > 120:
+        raise ValueError("Tag is too long")
+    if "unit" in data and data["unit"] not in UNITS:
+        raise ValueError("Unsupported unit")
     if "price_rs" in data and (
         type(data["price_rs"]) is not int or not 0 < data["price_rs"] <= 1_000_000
     ):
@@ -120,6 +117,13 @@ def product_data(data, creating):
     return data
 
 
+def tag_name(name):
+    name = name.strip()
+    if not name or len(name) > 120:
+        raise ValueError("Tag name must be 1–120 characters")
+    return name
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -133,6 +137,17 @@ def main():
             command.add_argument("--dry-run", action="store_true", help="Preview without writing")
         if name == "delete":
             command.add_argument("--yes", action="store_true", help="Confirm permanent deletion")
+    tag_command = commands.add_parser("tags", help="Manage storefront tags")
+    tag_command.add_argument("--local", action="store_true", help="Use local D1")
+    tag_commands = tag_command.add_subparsers(dest="tag_command", required=True)
+    for name in ("list", "create", "update", "delete"):
+        command = tag_commands.add_parser(name)
+        if name != "list":
+            command.add_argument("name")
+        if name == "update":
+            command.add_argument("new_name")
+        if name == "delete":
+            command.add_argument("--yes", action="store_true", help="Confirm deletion")
     args = parser.parse_args()
     cf = str(Path(__file__).resolve().parents[1] / "node_modules/.bin/cf")
     if not Path(cf).is_file():
@@ -140,6 +155,36 @@ def main():
     if os.environ.get("CLOUDFLARE_ACCOUNT_ID", ACCOUNT) != ACCOUNT:
         raise ValueError("CLOUDFLARE_ACCOUNT_ID differs from database.json")
     os.environ["CLOUDFLARE_ACCOUNT_ID"] = ACCOUNT
+
+    if args.command == "tags":
+        if args.tag_command == "list":
+            rows = query(cf, "SELECT name, position FROM tags ORDER BY position, name", local=args.local)
+            print(json.dumps(rows))
+            return
+        # Existing names may predate the operator's naming rules; look them up exactly.
+        name = tag_name(args.name) if args.tag_command == "create" else args.name
+        if args.tag_command == "create":
+            rows = query(
+                cf,
+                "INSERT INTO tags (name, position) VALUES (?, (SELECT COALESCE(MAX(position), 0) + 1 FROM tags)) RETURNING name, position",
+                [name], args.local,
+            )
+        elif args.tag_command == "update":
+            new_name = tag_name(args.new_name)
+            rows = query(
+                cf, "UPDATE tags SET name = ? WHERE name = ? RETURNING name, position",
+                [new_name, name], args.local,
+            )
+        else:
+            if not args.yes:
+                raise ValueError(f"Refusing to delete tag {name} without --yes")
+            if query(cf, "SELECT id FROM products WHERE tag = ? LIMIT 1", [name], args.local):
+                raise ValueError(f"Tag {name} has products; reassign them before deleting it")
+            rows = query(cf, "DELETE FROM tags WHERE name = ? RETURNING name", [name], args.local)
+        if not rows:
+            raise ValueError(f"Tag {name} does not exist")
+        print(json.dumps(rows[0]))
+        return
 
     if args.command == "list":
         rows = query(cf, f"SELECT {SELECT} FROM products ORDER BY id", local=args.local)
@@ -167,6 +212,10 @@ def main():
         return
 
     data = product_data(json.loads(args.product.read_text()), args.command == "create")
+    if "tag" in data and not query(
+        cf, "SELECT name FROM tags WHERE name = ?", [data["tag"]], args.local
+    ):
+        raise ValueError(f"Tag {data['tag']} does not exist; create it first")
     selling_rules = {**(old or {}), **data}
     if selling_rules.get("selling_rule", "standard") != "standard" and selling_rules["unit"] != "kg":
         raise ValueError("Weight-based selling rules require a kg unit")

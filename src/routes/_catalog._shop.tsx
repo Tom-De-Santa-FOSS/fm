@@ -12,23 +12,18 @@ import { AddToBasketSheet } from "../components/add-to-basket-sheet";
 import { PromotionVideo } from "../components/promotion-video";
 import {
   BasketDock,
-  CategoryNav,
   Footer,
   Header,
   ProductCard,
+  TagNav,
 } from "../components/storefront";
 import { Button } from "../components/ui/button";
 import { useCart } from "../lib/cart";
 import { findProducts } from "../lib/catalog";
-import {
-  catalogGroups,
-  categoryTags,
-  isBrowseCategory,
-} from "../lib/categories";
 import type { Product } from "../lib/products";
 
 interface ShopSearch {
-  category?: string;
+  tag?: string;
   search?: string;
 }
 
@@ -41,19 +36,19 @@ const EmptySummary = ({ title }: { title: string }) => (
 
 const ShopHeader = ({
   basketCount,
-  category,
+  tag,
   onSearchSubmit,
   search,
 }: {
   basketCount: number;
-  category: string;
+  tag?: string;
   onSearchSubmit: (value: string) => void;
   search?: string;
 }) => {
-  const [draft, setDraft] = useState({ category, query: search ?? "", search });
+  const [draft, setDraft] = useState({ query: search ?? "", search, tag });
 
-  if (draft.category !== category || draft.search !== search) {
-    setDraft({ category, query: search ?? "", search });
+  if (draft.tag !== tag || draft.search !== search) {
+    setDraft({ query: search ?? "", search, tag });
   }
 
   return (
@@ -61,21 +56,22 @@ const ShopHeader = ({
       basketCount={basketCount}
       showBanner
       search={draft.query}
-      onSearch={(query) => setDraft({ category, query, search })}
+      onSearch={(query) => setDraft({ query, search, tag })}
       onSearchSubmit={onSearchSubmit}
     />
   );
 };
 
 const ShopLayout = () => {
-  const { category: selectedCategory, search: submittedQuery } = useSearch({
+  const { tag: selectedTag, search: submittedQuery } = useSearch({
     from: "/_catalog/_shop",
   });
 
   const { count } = useCart();
   const navigate = useNavigate({ from: "/" });
-  const products = useLoaderData({ from: "/_catalog" });
-  const category = selectedCategory ?? "All groceries";
+  const { products, tags } = useLoaderData({ from: "/_catalog" });
+
+  const tag = tags.find((name) => name === selectedTag);
 
   const [chosen, setChosen] = useState<Product | null>(null);
 
@@ -89,41 +85,36 @@ const ShopLayout = () => {
     retry: false,
   });
 
-  const setCategory = (name: string) =>
+  const setTag = (name?: string) =>
     navigate({
       resetScroll: false,
       search: {
-        category: name === "All groceries" ? undefined : name,
         search: undefined,
+        tag: name,
       },
       to: "/",
     });
 
   const visible = submittedQuery
     ? (search.data ?? [])
-    : products.filter(
-        (product) =>
-          !selectedCategory ||
-          categoryTags(selectedCategory).includes(product.tag)
-      );
+    : products.filter((product) => !tag || product.tag === tag);
 
   const pending = Boolean(submittedQuery && search.isPending);
   const searchComplete = !pending && !search.isError;
-  const browsing = category === "All groceries" && !submittedQuery;
+  const browsing = !tag && !submittedQuery;
+
+  const browseTags = [
+    ...tags.filter((name) => name === "Chicken"),
+    ...tags.filter((name) => name !== "Chicken"),
+  ];
 
   const groups = browsing
-    ? catalogGroups
-        .map(
-          (name) =>
-            [
-              name,
-              products.filter((product) =>
-                categoryTags(name).includes(product.tag)
-              ),
-            ] as const
-        )
-        .filter(([, items]) => items.length)
-    : [[submittedQuery ? "Search results" : category, visible] as const];
+    ? browseTags.flatMap((name) => {
+        const items = products.filter((product) => product.tag === name);
+
+        return items.length ? [[name, items] as const] : [];
+      })
+    : [[submittedQuery ? "Search results" : tag, visible] as const];
 
   return (
     <div
@@ -131,13 +122,13 @@ const ShopLayout = () => {
     >
       <ShopHeader
         basketCount={count}
-        category={category}
+        tag={tag}
         onSearchSubmit={(value) => {
           void navigate({
             resetScroll: false,
             search: {
-              category: undefined,
               search: value.trim() || undefined,
+              tag: undefined,
             },
             to: "/",
           });
@@ -146,9 +137,7 @@ const ShopLayout = () => {
       />
       <main className="shop-main">
         {submittedQuery === undefined && <PromotionVideo />}
-        {!submittedQuery && (
-          <CategoryNav category={category} onCategory={setCategory} />
-        )}
+        {!submittedQuery && <TagNav tag={tag} tags={tags} onTag={setTag} />}
         {submittedQuery && search.isError && (
           <section className="no-results" role="alert">
             <h1>Search is unavailable</h1>
@@ -187,7 +176,9 @@ const ShopLayout = () => {
           ) : (
             <>
               <EmptySummary
-                title={submittedQuery ? "Search results" : category}
+                title={
+                  submittedQuery ? "Search results" : (tag ?? "All groceries")
+                }
               />
               <section className="search-empty" aria-live="polite">
                 <h2>No products found</h2>
@@ -240,13 +231,12 @@ export const Route = createFileRoute("/_catalog/_shop")({
     /* oxlint-enable anti-slop/no-runtime-typeof */
 
     return {
-      category:
-        !query &&
-        isBrowseCategory(search.category) &&
-        search.category !== "All groceries"
-          ? search.category
-          : undefined,
       search: query || undefined,
+      tag:
+        // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Validate unknown URL data at the route boundary.
+        !query && typeof search.tag === "string" && search.tag.length <= 120
+          ? search.tag
+          : undefined,
     };
   },
 });

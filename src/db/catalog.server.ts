@@ -3,12 +3,21 @@ import { asc, eq, getTableColumns, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 
 import type { Product } from "../lib/products";
-import { products } from "./schema";
+import { products, tags } from "./schema";
 
 const database = () => drizzle(env.DB);
 
 export const listProducts = (): Promise<Product[]> =>
   database().select().from(products).orderBy(asc(products.id));
+
+export const listTags = async (): Promise<string[]> => {
+  const rows = await database()
+    .select({ name: tags.name })
+    .from(tags)
+    .orderBy(asc(tags.position), asc(tags.name));
+
+  return rows.map(({ name }) => name);
+};
 
 export const getProduct = async (id: number): Promise<Product | undefined> => {
   const rows = await database()

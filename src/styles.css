@@ -405,11 +405,12 @@ img {
     letter-spacing: -0.04em;
   }
 }
-.category-nav {
+.tag-nav {
   position: relative;
   width: 100%;
   min-height: 44px;
   padding: 0;
+  justify-content: flex-start;
   border-bottom: 1px solid var(--border);
   background: transparent;
   color: var(--shop-muted);
@@ -419,16 +420,16 @@ img {
   overflow-x: auto;
   scrollbar-width: none;
 }
-.category-nav::-webkit-scrollbar {
+.tag-nav::-webkit-scrollbar {
   display: none;
 }
-.category-nav[data-overflow-end] {
+.tag-nav[data-overflow-end] {
   mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
 }
-.category-nav[data-overflow-start] {
+.tag-nav[data-overflow-start] {
   mask-image: linear-gradient(to right, transparent, #000 32px);
 }
-.category-nav[data-overflow-start][data-overflow-end] {
+.tag-nav[data-overflow-start][data-overflow-end] {
   mask-image: linear-gradient(
     to right,
     transparent,
@@ -437,8 +438,8 @@ img {
     transparent
   );
 }
-.category-nav button {
-  flex-shrink: 0;
+.tag-nav button {
+  flex: none;
   min-height: 44px;
   border: 0;
   border-radius: 4px;
@@ -452,40 +453,26 @@ img {
     background-color 120ms ease,
     color 120ms ease;
 }
-.category-nav button[aria-current="page"] {
+.tag-nav button[data-active] {
   color: var(--shop-ink);
 }
 @media (hover: hover) and (pointer: fine) {
-  .category-nav button:hover {
+  .tag-nav button:hover {
     background: var(--muted);
     text-decoration: none;
   }
 }
-.category-nav button:focus-visible {
+.tag-nav button:focus-visible {
   outline-offset: -3px;
 }
-.category-nav span {
+.tag-nav .tag-location {
   margin-left: auto;
   align-self: center;
   font-size: 12px;
   white-space: nowrap;
 }
-.category-indicator {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: var(--active-tab-width, 0px);
-  height: 2px;
-  background: var(--shop-green);
-  pointer-events: none;
-  transform: translateX(var(--active-tab-left, 0px));
-  transition:
-    transform 120ms ease-in-out,
-    width 120ms ease-in-out;
-}
 @media (prefers-reduced-motion: reduce) {
-  .category-indicator,
-  .category-nav button {
+  .tag-nav button {
     transition: none;
   }
 }
@@ -1294,7 +1281,7 @@ img {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
   }
-  .category-nav {
+  .tag-nav {
     gap: 16px;
   }
   .sheet-scroll {
@@ -1393,11 +1380,11 @@ img {
     margin-right: 18px;
     margin-left: 18px;
   }
-  .category-nav {
+  .tag-nav {
     margin: 0 18px;
     width: calc(100% - 36px);
   }
-  .category-nav span {
+  .tag-nav .tag-location {
     display: none;
   }
   .catalog-section {

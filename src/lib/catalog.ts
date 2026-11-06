@@ -6,6 +6,12 @@ export const getCatalog = createServerFn().handler(async () => {
   return listProducts();
 });
 
+export const getTags = createServerFn().handler(async () => {
+  const { listTags } = await import("../db/catalog.server");
+
+  return listTags();
+});
+
 export const getCatalogProduct = createServerFn()
   .validator((id: number) => {
     if (!Number.isSafeInteger(id) || id <= 0) {

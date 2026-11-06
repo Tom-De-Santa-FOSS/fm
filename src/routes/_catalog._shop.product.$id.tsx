@@ -20,7 +20,7 @@ const ProductPage = () => {
       search:
         search.from === "cart"
           ? {}
-          : { category: search.category, search: search.search },
+          : { search: search.search, tag: search.tag },
       to: search.from === "cart" ? "/cart" : "/",
     });
 

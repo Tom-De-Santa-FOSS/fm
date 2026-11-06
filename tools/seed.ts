@@ -50,7 +50,7 @@ const statements = products.map((product) => {
     product.selling_rule ?? "standard",
   ].map((value) => `'${String(value).replaceAll("'", "''")}'`);
 
-  return `INSERT INTO products (id, name, tag, description, image_url, price_rs, unit, available, ai_keywords, selling_rule) VALUES (${values.join(", ")}) ON CONFLICT(id) DO NOTHING;`;
+  return `INSERT INTO products (id, name, tag, description, image_url, price_rs, unit, available, ai_keywords, selling_rule) SELECT ${values.join(", ")} WHERE EXISTS (SELECT 1 FROM tags WHERE name = ${values[2]}) ON CONFLICT(id) DO NOTHING;`;
 });
 
 execFileSync(

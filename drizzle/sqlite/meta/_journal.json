@@ -85,6 +85,13 @@
       "when": 1793908304461,
       "tag": "0011_product_selling_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1793977478646,
+      "tag": "0012_wandering_black_tom",
+      "breakpoints": true
     }
   ]
 }

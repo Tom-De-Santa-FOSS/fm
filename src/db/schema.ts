@@ -2,6 +2,11 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import type { Product } from "../lib/products";
 
+export const tags = sqliteTable("tags", {
+  name: text().primaryKey(),
+  position: integer().notNull(),
+});
+
 export const products = sqliteTable("products", {
   ai_keywords: text().notNull().default(""),
   available: integer({ mode: "boolean" }).notNull().default(true),
@@ -13,6 +18,8 @@ export const products = sqliteTable("products", {
   selling_rule: text({ enum: ["standard", "variable_weight", "whole_kg_only"] })
     .notNull()
     .default("standard"),
-  tag: text().notNull(),
+  tag: text()
+    .notNull()
+    .references(() => tags.name, { onDelete: "restrict", onUpdate: "cascade" }),
   unit: text().$type<Product["unit"]>().notNull(),
 });
