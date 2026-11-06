@@ -10,6 +10,7 @@ export const catalogGroups = [
   "Chicken",
   "Vegetables",
   "Eggs & Bakery",
+  "Pantry",
 ] as const;
 
 export const isBrowseCategory = (
