@@ -11,7 +11,7 @@ import {
 
 const HandoffPage = () => {
   const { lines, count, total, exceedsLimit, canOrder } = useCart();
-  const [copied, setCopied] = useState(false);
+  const [copiedText, setCopiedText] = useState<string | null>(null);
 
   if (!canOrder) {
     return (
@@ -83,13 +83,13 @@ const HandoffPage = () => {
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(text);
-              setCopied(true);
+              setCopiedText(text);
             } catch {
-              setCopied(false);
+              setCopiedText(null);
             }
           }}
         >
-          {copied ? "Copied" : "Copy order text"}
+          {copiedText === text ? "Copied" : "Copy order text"}
         </button>
       </main>
     </div>

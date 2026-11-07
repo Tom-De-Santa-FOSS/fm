@@ -182,14 +182,43 @@ export const CartProvider = ({
 }) => {
   const [lines, setLines] = useState<CartLine[]>([]);
   const linesRef = useRef(lines);
+  const restored = useRef(false);
 
   useEffect(() => {
-    const restored = loadCart(products);
-    linesRef.current = restored;
+    if (!restored.current) {
+      restored.current = true;
+      const saved = loadCart(products);
+      linesRef.current = saved;
 
-    // Restore after hydration so the server and first client render match.
-    // oxlint-disable-next-line react/set-state-in-effect -- Browser storage cannot be read during SSR.
-    setLines(restored);
+      // Restore after hydration so the server and first client render match.
+      // oxlint-disable-next-line react/set-state-in-effect -- Browser storage cannot be read during SSR.
+      setLines(saved);
+
+      return;
+    }
+
+    const previous = linesRef.current;
+
+    const next = previous.flatMap(({ product, quantity }) => {
+      const current = products.find((item) => item.id === product.id);
+
+      return current &&
+        current.available &&
+        Number.isInteger(quantity / productQuantityStep(current))
+        ? [{ product: current, quantity }]
+        : [];
+    });
+
+    if (
+      next.length === previous.length &&
+      next.every((line, index) => line.product === previous[index].product)
+    ) {
+      return;
+    }
+
+    linesRef.current = next;
+    setLines(next);
+    saveCart(next);
   }, [products]);
 
   const value = useMemo<CartValue>(() => {

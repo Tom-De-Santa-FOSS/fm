@@ -21,20 +21,37 @@ export const PromotionVideo = () => {
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const media = video.current;
+    let resumeAfterPreference = false;
 
-    const syncPlayback = () => {
+    if (!preference.matches) {
+      // Browsers may reject autoplay even when the video is muted.
+      void media?.play().catch(() => null);
+    }
+
+    const onPlay = () => {
       if (preference.matches) {
-        video.current?.pause();
-      } else {
-        // Browsers may reject autoplay even when the video is muted.
-        void video.current?.play().catch(() => null);
+        resumeAfterPreference = false;
       }
     };
 
-    syncPlayback();
-    preference.addEventListener("change", syncPlayback);
+    const onChange = () => {
+      if (preference.matches) {
+        resumeAfterPreference = !media?.paused;
+        media?.pause();
+      } else if (resumeAfterPreference) {
+        resumeAfterPreference = false;
+        void media?.play().catch(() => null);
+      }
+    };
 
-    return () => preference.removeEventListener("change", syncPlayback);
+    media?.addEventListener("play", onPlay);
+    preference.addEventListener("change", onChange);
+
+    return () => {
+      media?.removeEventListener("play", onPlay);
+      preference.removeEventListener("change", onChange);
+    };
   }, []);
 
   return (
